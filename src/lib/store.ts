@@ -100,7 +100,7 @@ export const useAppStore = create<AppState>()(
       searchQuery: "",
 
       // Demo user
-      currentUser: DEMO_USER,
+      currentUser: null,
 
       // Default preferences
       preferences: {

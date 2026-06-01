@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import {
   Sparkles,
@@ -11,28 +11,86 @@ import {
   Eye,
   EyeOff,
   Shield,
+  Sliders,
+  Building2,
+  ShieldAlert
 } from "lucide-react";
+import { useAppStore } from "@/lib/store";
 import { Button, Input, Separator, cn } from "@/components/ui";
+
+const DEMO_USER = {
+  id: "user_demo_001",
+  name: "Alexandra Chen",
+  email: "alex@fosterpartners.com",
+  role: "ceo",
+  orgId: "org_demo_001",
+  orgName: "Foster & Partners",
+  orgSlug: "foster-partners",
+  orgPlan: "ENTERPRISE",
+  permissions: ["*"],
+};
 
 export default function LoginPage() {
   const router = useRouter();
+  const { setCurrentUser } = useAppStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Fresh Onboarding Modal States
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [newOrgName, setNewOrgName] = useState("");
+  const [newOrgType, setNewOrgType] = useState("ARCHITECTURE");
+  const [newOwnerName, setNewOwnerName] = useState("");
+  const [newOwnerEmail, setNewOwnerEmail] = useState("");
+  const [newBrandColor, setNewBrandColor] = useState("#6366f1");
+  const [isOnboarding, setIsOnboarding] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     // Simulate auth
     await new Promise((r) => setTimeout(r, 1000));
+    setCurrentUser(DEMO_USER);
     router.push("/");
   };
 
   const handleDemoLogin = async () => {
     setIsLoading(true);
     await new Promise((r) => setTimeout(r, 800));
+    setCurrentUser(DEMO_USER);
     router.push("/");
+  };
+
+  const handleWorkspaceReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsOnboarding(true);
+    try {
+      const res = await fetch("/api/workspace/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orgName: newOrgName,
+          ownerName: newOwnerName,
+          ownerEmail: newOwnerEmail,
+          orgType: newOrgType,
+          brandColor: newBrandColor
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Reset failed");
+      }
+      setCurrentUser(data.user);
+      alert(`Workspace "${newOrgName}" successfully created and database cleared!`);
+      router.push("/");
+    } catch (err: any) {
+      console.error(err);
+      alert("Failed to initialize workspace: " + err.message);
+    } finally {
+      setIsOnboarding(false);
+    }
   };
 
   return (
@@ -151,17 +209,32 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Demo login button */}
-          <Button
-            variant="secondary"
-            size="lg"
-            className="w-full border-[var(--accent-2)]/30 hover:border-[var(--accent-2)]/50 hover:bg-[var(--accent-2)]/5"
-            onClick={handleDemoLogin}
-          >
-            <Sparkles size={16} className="text-[var(--accent-2)]" />
-            <span>Enter Demo Workspace</span>
-            <ArrowRight size={14} className="ml-auto" />
-          </Button>
+          {/* Action triggers: Demo vs Fresh */}
+          <div className="space-y-3">
+            <Button
+              variant="secondary"
+              size="lg"
+              className="w-full border-[var(--accent-2)]/35 hover:border-[var(--accent-2)]/50 hover:bg-[var(--accent-2)]/5"
+              onClick={handleDemoLogin}
+              disabled={isLoading}
+            >
+              <Sparkles size={16} className="text-[var(--accent-2)]" />
+              <span>Enter Demo Workspace</span>
+              <ArrowRight size={14} className="ml-auto animate-pulse" />
+            </Button>
+
+            <Button
+              variant="secondary"
+              size="lg"
+              className="w-full border-red-500/30 hover:border-red-500/50 hover:bg-red-500/5 text-red-200"
+              onClick={() => setShowOnboarding(true)}
+              disabled={isLoading}
+            >
+              <Sliders size={16} className="text-red-400" />
+              <span>Initialize Fresh Studio</span>
+              <Sparkles size={14} className="ml-auto text-amber-400 shrink-0" />
+            </Button>
+          </div>
 
           <div className="relative">
             <Separator />
@@ -263,6 +336,150 @@ export default function LoginPage() {
           </div>
         </motion.div>
       </div>
+
+      {/* Onboarding Clean Slate Modal Overlay */}
+      <AnimatePresence>
+        {showOnboarding && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop blur */}
+            <motion.div
+              className="absolute inset-0 bg-black/60 backdrop-blur-md"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => !isOnboarding && setShowOnboarding(false)}
+            />
+
+            {/* Modal Body */}
+            <motion.div
+              className="relative z-10 w-full max-w-lg rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-2xl space-y-6"
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: "spring", duration: 0.4 }}
+            >
+              <div>
+                <h3 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
+                  <Sliders size={20} className="text-red-400" />
+                  Clean Slate Onboarding Setup
+                </h3>
+                <p className="text-xs text-[var(--text-secondary)] mt-1">
+                  Create your own custom design studio. This will clear the demo database and launch a fresh, personalized workspace.
+                </p>
+              </div>
+
+              {/* Danger callout */}
+              <div className="p-3.5 rounded-xl bg-red-500/5 border border-red-500/10 text-red-300 text-[11px] leading-relaxed">
+                <div className="flex items-center gap-1.5 font-bold text-red-400 mb-1">
+                  <ShieldAlert size={14} />
+                  DATABASE WIPE NOTICE
+                </div>
+                All preloaded Foster & Partners records (milestones, tasks, mock assets, invoices) in your Supabase database will be permanently reset to empty slates.
+              </div>
+
+              {/* Onboarding Form */}
+              <form onSubmit={handleWorkspaceReset} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-[var(--text-secondary)]">Your Studio Name</label>
+                    <Input
+                      placeholder="e.g. Lalgi Architects"
+                      value={newOrgName}
+                      onChange={(e) => setNewOrgName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-[var(--text-secondary)]">Specialization</label>
+                    <select
+                      className="w-full flex h-10 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--accent-2)] transition-colors"
+                      value={newOrgType}
+                      onChange={(e) => setNewOrgType(e.target.value)}
+                    >
+                      <option value="ARCHITECTURE">Architecture Firm</option>
+                      <option value="INTERIOR_DESIGN">Interior Design Studio</option>
+                      <option value="PRODUCTION">Production / Fitout Agency</option>
+                      <option value="GRAPHIC_DESIGN">Graphic Design Agency</option>
+                      <option value="BRAND_AGENCY">Brand & Strategy Firm</option>
+                      <option value="MIXED">Mixed Creative Agency</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-[var(--text-secondary)]">Founder Name</label>
+                    <Input
+                      placeholder="e.g. Jishnu Lalgi"
+                      value={newOwnerName}
+                      onChange={(e) => setNewOwnerName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-[var(--text-secondary)]">Business Email</label>
+                    <Input
+                      type="email"
+                      placeholder="e.g. jishnu@yourdomain.com"
+                      value={newOwnerEmail}
+                      onChange={(e) => setNewOwnerEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-1">
+                  <label className="text-xs font-semibold text-[var(--text-secondary)]">Studio Brand Accent Color</label>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {[
+                      { hex: "#6366f1", name: "Indigo" },
+                      { hex: "#00d4ff", name: "Blueprint" },
+                      { hex: "#4ade80", name: "Green" },
+                      { hex: "#fb7185", name: "Quartz" },
+                      { hex: "#f59e0b", name: "Amber" },
+                      { hex: "#a855f7", name: "Purple" }
+                    ].map((col) => (
+                      <button
+                        type="button"
+                        key={col.hex}
+                        onClick={() => setNewBrandColor(col.hex)}
+                        className={cn(
+                          "h-7 px-2.5 rounded-lg text-[9px] font-bold flex items-center gap-1.5 border transition-all active:scale-[0.98]",
+                          newBrandColor === col.hex
+                            ? "border-[var(--accent-2)] bg-[var(--surface-hover)]"
+                            : "border-[var(--border)] hover:bg-[var(--surface-hover)] bg-[var(--surface)] text-[var(--text-tertiary)]"
+                        )}
+                      >
+                        <div style={{ backgroundColor: col.hex }} className="h-2.5 w-2.5 rounded-full shrink-0" />
+                        {col.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Submit / Cancel Actions */}
+                <div className="flex items-center justify-end gap-2 pt-4 border-t border-[var(--border)]">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowOnboarding(false)}
+                    disabled={isOnboarding}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="sm"
+                    disabled={isOnboarding}
+                    className="bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-700 hover:to-amber-700 text-white font-bold"
+                  >
+                    {isOnboarding ? "Initializing Fresh Studio..." : "Create Clean Studio Workspace"}
+                  </Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

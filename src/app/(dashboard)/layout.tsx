@@ -9,13 +9,31 @@ import { CommandPalette } from "@/components/layout/CommandPalette";
 import { NotificationCenter } from "@/components/layout/NotificationCenter";
 import { AIPanel } from "@/components/layout/AIPanel";
 
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { sidebarCollapsed, sidebarHovered } = useAppStore();
+  const router = useRouter();
+  const { sidebarCollapsed, sidebarHovered, currentUser } = useAppStore();
   const sidebarWidth = !sidebarCollapsed || sidebarHovered ? 256 : 72;
+
+  useEffect(() => {
+    if (!currentUser) {
+      router.push("/login");
+    }
+  }, [currentUser, router]);
+
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--accent-2)] border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text-primary)]">
