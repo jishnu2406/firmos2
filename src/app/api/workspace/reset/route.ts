@@ -15,84 +15,81 @@ export async function POST(request: Request) {
 
     const orgSlug = orgName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "studio";
 
-    // Perform atomic transaction to clean and seed fresh database structure
-    await db.$transaction(async (tx) => {
-      // 1. Wipe all related tables in exact order to satisfy relational dependencies
-      await tx.notification.deleteMany();
-      await tx.auditLog.deleteMany();
-      await tx.leave.deleteMany();
-      await tx.timeEntry.deleteMany();
-      await tx.invoice.deleteMany();
-      await tx.taskAttachment.deleteMany();
-      await tx.taskComment.deleteMany();
-      await tx.task.deleteMany();
-      await tx.projectPhase.deleteMany();
-      await tx.projectMember.deleteMany();
-      await tx.projectMilestone.deleteMany();
-      await tx.project.deleteMany();
-      await tx.clientContact.deleteMany();
-      await tx.client.deleteMany();
-      await tx.asset.deleteMany();
-      await tx.message.deleteMany();
-      await tx.channelMember.deleteMany();
-      await tx.channel.deleteMany();
-      await tx.aIMessage.deleteMany();
-      await tx.aIConversation.deleteMany();
-      await tx.aIAgentRun.deleteMany();
-      await tx.aIAgent.deleteMany();
-      await tx.department.deleteMany();
-      await tx.organizationMember.deleteMany();
-      await tx.account.deleteMany();
-      await tx.session.deleteMany();
-      await tx.verificationToken.deleteMany();
-      await tx.user.deleteMany();
-      await tx.organization.deleteMany();
+    // 1. Wipe all related tables in exact order to satisfy relational dependencies
+    await db.notification.deleteMany();
+    await db.auditLog.deleteMany();
+    await db.leave.deleteMany();
+    await db.timeEntry.deleteMany();
+    await db.invoice.deleteMany();
+    await db.taskAttachment.deleteMany();
+    await db.taskComment.deleteMany();
+    await db.task.deleteMany();
+    await db.projectPhase.deleteMany();
+    await db.projectMember.deleteMany();
+    await db.projectMilestone.deleteMany();
+    await db.project.deleteMany();
+    await db.clientContact.deleteMany();
+    await db.client.deleteMany();
+    await db.asset.deleteMany();
+    await db.message.deleteMany();
+    await db.channelMember.deleteMany();
+    await db.channel.deleteMany();
+    await db.aIMessage.deleteMany();
+    await db.aIConversation.deleteMany();
+    await db.aIAgentRun.deleteMany();
+    await db.aIAgent.deleteMany();
+    await db.department.deleteMany();
+    await db.organizationMember.deleteMany();
+    await db.account.deleteMany();
+    await db.session.deleteMany();
+    await db.verificationToken.deleteMany();
+    await db.user.deleteMany();
+    await db.organization.deleteMany();
 
-      // 2. Create the brand new fresh organization
-      const freshOrg = await tx.organization.create({
-        data: {
-          name: orgName,
-          slug: orgSlug,
-          type: orgType,
-          plan: "ENTERPRISE",
-          brandColor: brandColor || "#6366f1",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      });
+    // 2. Create the brand new fresh organization
+    const freshOrg = await db.organization.create({
+      data: {
+        name: orgName,
+        slug: orgSlug,
+        type: orgType,
+        plan: "ENTERPRISE",
+        brandColor: brandColor || "#6366f1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
 
-      // 3. Create the brand new primary owner user
-      const freshUser = await tx.user.create({
-        data: {
-          name: ownerName,
-          email: ownerEmail,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      });
+    // 3. Create the brand new primary owner user
+    const freshUser = await db.user.create({
+      data: {
+        name: ownerName,
+        email: ownerEmail,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
 
-      // 4. Bind the user to the organization with OWNER role
-      await tx.organizationMember.create({
-        data: {
-          orgId: freshOrg.id,
-          userId: freshUser.id,
-          role: "OWNER",
-          joinedAt: new Date(),
-          isActive: true,
-        },
-      });
+    // 4. Bind the user to the organization with OWNER role
+    await db.organizationMember.create({
+      data: {
+        orgId: freshOrg.id,
+        userId: freshUser.id,
+        role: "OWNER",
+        joinedAt: new Date(),
+        isActive: true,
+      },
+    });
 
-      // 5. Pre-seed a default General chat channel for convenience
-      await tx.channel.create({
-        data: {
-          orgId: freshOrg.id,
-          name: "general",
-          description: "Studio-wide announcements and general discussion",
-          type: "GENERAL",
-          isPrivate: false,
-          createdAt: new Date(),
-        },
-      });
+    // 5. Pre-seed a default General chat channel for convenience
+    await db.channel.create({
+      data: {
+        orgId: freshOrg.id,
+        name: "general",
+        description: "Studio-wide announcements and general discussion",
+        type: "GENERAL",
+        isPrivate: false,
+        createdAt: new Date(),
+      },
     });
 
     // Fetch the newly created user and org to return clean session variables
