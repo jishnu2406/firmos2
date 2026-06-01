@@ -282,7 +282,7 @@ export default function DashboardPage() {
             <Calendar size={14} />
             Dec 1, 2024
           </Button>
-          <Button variant="primary" size="sm">
+          <Button onClick={() => window.location.href = "/projects?new=true"} variant="primary" size="sm">
             <Plus size={14} />
             New Project
           </Button>
@@ -349,7 +349,7 @@ export default function DashboardPage() {
                   <p className="text-xs text-[var(--text-secondary)] mt-1 max-w-xs px-4">
                     Get started by adding your first active client project to the command center.
                   </p>
-                  <Button onClick={() => window.location.href = "/projects"} variant="primary" size="sm" className="mt-4 gap-1">
+                  <Button onClick={() => window.location.href = "/projects?new=true"} variant="primary" size="sm" className="mt-4 gap-1">
                     <Plus size={14} />
                     New Project
                   </Button>

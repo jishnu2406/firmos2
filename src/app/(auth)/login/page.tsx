@@ -58,7 +58,7 @@ export default function LoginPage() {
   // Authentic OAuth Configuration States
   const [showGoogleConfig, setShowGoogleConfig] = useState(false);
   const [googleClientId, setGoogleClientId] = useState(
-    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "1005826849929-hfe96bspn9brm8q8711k9424l9d8he0j.apps.googleusercontent.com"
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""
   );
   const [showMicrosoftConfig, setShowMicrosoftConfig] = useState(false);
   const [microsoftClientId, setMicrosoftClientId] = useState(

@@ -28,6 +28,7 @@ import {
   Input
 } from "@/components/ui";
 import { useAppStore } from "@/lib/store";
+import { useSearchParams } from "next/navigation";
 
 // Realistic project dataset
 const DEMO_PROJECTS = [
@@ -188,6 +189,7 @@ const itemVariants = {
 
 export default function ProjectsPage() {
   const { currentUser, isDemo } = useAppStore();
+  const searchParams = useSearchParams();
   const [view, setView] = useState<"grid" | "list" | "board">("grid");
   const [filter, setFilter] = useState<string>("All");
   const [search, setSearch] = useState<string>("");
@@ -243,6 +245,12 @@ export default function ProjectsPage() {
   React.useEffect(() => {
     fetchProjects();
   }, [isDemo, currentUser]);
+
+  React.useEffect(() => {
+    if (searchParams && searchParams.get("new") === "true") {
+      setShowNewProject(true);
+    }
+  }, [searchParams]);
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
