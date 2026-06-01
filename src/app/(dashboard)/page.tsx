@@ -114,7 +114,7 @@ const RECENT_ACTIVITY = [
   },
   {
     id: "2",
-    user: "NEXUS Mind",
+    user: "DNAX.ai Mind",
     avatar: "AI",
     action: "generated progress report for",
     target: "Marina Bay Residences",
@@ -211,11 +211,53 @@ const fadeUp = {
 };
 
 export default function DashboardPage() {
-  const { currentUser } = useAppStore();
-  const projectCount = useAnimatedValue(8);
-  const taskCount = useAnimatedValue(47);
-  const revenue = useAnimatedValue(2840000);
-  const utilization = useAnimatedValue(76);
+  const { currentUser, isDemo } = useAppStore();
+  const [dashboardProjects, setDashboardProjects] = useState<any[]>([]);
+  const [dbStats, setDbStats] = useState({ projectCount: 0, taskCount: 0, revenue: 0, utilization: 0 });
+
+  React.useEffect(() => {
+    if (isDemo || !currentUser) {
+      setDashboardProjects(ACTIVE_PROJECTS);
+      setDbStats({ projectCount: 8, taskCount: 47, revenue: 2840000, utilization: 76 });
+      return;
+    }
+    const fetchDashboardData = async () => {
+      try {
+        const res = await fetch(`/api/projects?orgId=${currentUser.orgId}`);
+        const data = await res.json();
+        if (res.ok) {
+          const mapped = data.projects.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            client: p.client?.name || "None",
+            phase: p.status === "ACTIVE" ? "Active" : p.status === "ON_HOLD" ? "On Hold" : "Completed",
+            progress: p.status === "COMPLETED" ? 100 : 15,
+            budget: { used: 0, total: p.budget || 0 },
+            status: p.status,
+            priority: p.priority,
+            dueDate: p.endDate ? new Date(p.endDate).toLocaleDateString() : "TBD",
+            team: [currentUser.name.split(" ").map((n: string) => n[0]).join("")],
+            coverColor: "from-blue-500/20 to-indigo-500/20"
+          }));
+          setDashboardProjects(mapped);
+          setDbStats({
+            projectCount: mapped.length,
+            taskCount: 0,
+            revenue: 0,
+            utilization: 0
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchDashboardData();
+  }, [isDemo, currentUser]);
+
+  const pCount = useAnimatedValue(isDemo ? 8 : dbStats.projectCount);
+  const tCount = useAnimatedValue(isDemo ? 47 : dbStats.taskCount);
+  const rev = useAnimatedValue(isDemo ? 2840000 : dbStats.revenue);
+  const util = useAnimatedValue(isDemo ? 76 : dbStats.utilization);
 
   const formatCurrency = (val: number) => {
     if (val >= 1000000) return `$${(val / 1000000).toFixed(1)}M`;
@@ -251,28 +293,28 @@ export default function DashboardPage() {
       <motion.div variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Active Projects"
-          value={projectCount}
+          value={pCount}
           change={{ value: 12, label: "vs last month" }}
           trend="up"
           icon={<FolderKanban size={20} />}
         />
         <StatCard
           label="Open Tasks"
-          value={taskCount}
+          value={tCount}
           change={{ value: -8, label: "vs last week" }}
           trend="down"
           icon={<CheckCircle2 size={20} />}
         />
         <StatCard
           label="Revenue YTD"
-          value={formatCurrency(revenue)}
+          value={formatCurrency(rev)}
           change={{ value: 23, label: "vs last year" }}
           trend="up"
           icon={<DollarSign size={20} />}
         />
         <StatCard
           label="Team Utilization"
-          value={`${utilization}%`}
+          value={`${util}%`}
           change={{ value: 5, label: "vs last month" }}
           trend="up"
           icon={<Activity size={20} />}
@@ -291,16 +333,29 @@ export default function DashboardPage() {
                   Active Projects
                 </h2>
                 <Badge variant="primary" size="sm">
-                  {ACTIVE_PROJECTS.length}
+                  {dashboardProjects.length}
                 </Badge>
               </div>
-              <Button variant="ghost" size="sm">
+              <Button onClick={() => window.location.href = "/projects"} variant="ghost" size="sm">
                 View All
                 <ExternalLink size={12} />
               </Button>
             </div>
             <div className="divide-y divide-[var(--border)]">
-              {ACTIVE_PROJECTS.map((project, i) => (
+              {dashboardProjects.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <FolderKanban size={36} className="text-[var(--text-tertiary)] mb-3" />
+                  <h3 className="text-sm font-bold text-[var(--text-primary)]">No active projects</h3>
+                  <p className="text-xs text-[var(--text-secondary)] mt-1 max-w-xs px-4">
+                    Get started by adding your first active client project to the command center.
+                  </p>
+                  <Button onClick={() => window.location.href = "/projects"} variant="primary" size="sm" className="mt-4 gap-1">
+                    <Plus size={14} />
+                    New Project
+                  </Button>
+                </div>
+              )}
+              {dashboardProjects.map((project, i) => (
                 <motion.div
                   key={project.id}
                   initial={{ opacity: 0, x: -10 }}
@@ -365,7 +420,7 @@ export default function DashboardPage() {
 
                   {/* Team avatars */}
                   <div className="flex -space-x-2 hidden sm:flex">
-                    {project.team.map((member) => (
+                    {project.team.map((member: string) => (
                       <Avatar
                         key={member}
                         fallback={member}

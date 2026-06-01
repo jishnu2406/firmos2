@@ -27,7 +27,7 @@ function getBreadcrumbs(pathname: string): { label: string; href: string }[] {
     finance: "Finance",
     invoices: "Invoices",
     reports: "Reports",
-    ai: "NEXUS Mind",
+    ai: "DNAX.ai Mind",
     agents: "AI Agents",
     settings: "Settings",
     knowledge: "Knowledge Base",

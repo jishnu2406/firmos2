@@ -32,7 +32,7 @@ const DEMO_USER = {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setCurrentUser } = useAppStore();
+  const { setCurrentUser, setIsDemo } = useAppStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -52,6 +52,7 @@ export default function LoginPage() {
     setIsLoading(true);
     // Simulate auth
     await new Promise((r) => setTimeout(r, 1000));
+    setIsDemo(true);
     setCurrentUser(DEMO_USER);
     router.push("/");
   };
@@ -59,7 +60,20 @@ export default function LoginPage() {
   const handleDemoLogin = async () => {
     setIsLoading(true);
     await new Promise((r) => setTimeout(r, 800));
+    setIsDemo(true);
     setCurrentUser(DEMO_USER);
+    router.push("/");
+  };
+
+  const handleSSOLogin = async (provider: "google" | "microsoft") => {
+    setIsLoading(true);
+    await new Promise((r) => setTimeout(r, 800));
+    setIsDemo(true);
+    setCurrentUser({
+      ...DEMO_USER,
+      name: provider === "google" ? "Alexandra Chen (Google)" : "Alexandra Chen (Microsoft)",
+      email: provider === "google" ? "alex.chen@google-sso.com" : "alex.chen@microsoft-sso.com",
+    });
     router.push("/");
   };
 
@@ -82,6 +96,7 @@ export default function LoginPage() {
       if (!res.ok) {
         throw new Error(data.error || "Reset failed");
       }
+      setIsDemo(false);
       setCurrentUser(data.user);
       alert(`Workspace "${newOrgName}" successfully created and database cleared!`);
       router.push("/");
@@ -132,10 +147,10 @@ export default function LoginPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <div className="h-10 w-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/10">
-              <Sparkles size={20} />
+            <div className="h-10 w-10 overflow-hidden rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/10">
+              <img src="/logo.png" alt="DNAX.ai Os Logo" className="h-full w-full object-cover" />
             </div>
-            <span className="text-xl font-bold tracking-tight">NEXUS OS</span>
+            <span className="text-xl font-bold tracking-tight">DNAX.ai Os</span>
           </motion.div>
 
           {/* Main text */}
@@ -191,11 +206,11 @@ export default function LoginPage() {
         >
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-3 justify-center mb-8">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[var(--accent-2)] to-purple-600 flex items-center justify-center text-white">
-              <Sparkles size={20} />
+            <div className="h-10 w-10 overflow-hidden rounded-xl bg-gradient-to-br from-[var(--accent-2)] to-purple-600 flex items-center justify-center">
+              <img src="/logo.png" alt="DNAX.ai Os Logo" className="h-full w-full object-cover" />
             </div>
             <span className="text-xl font-bold text-[var(--text-primary)] tracking-tight">
-              NEXUS OS
+              DNAX.ai Os
             </span>
           </div>
 
@@ -245,7 +260,13 @@ export default function LoginPage() {
 
           {/* SSO buttons */}
           <div className="grid grid-cols-2 gap-3">
-            <Button variant="secondary" size="md" className="gap-2">
+            <Button
+              variant="secondary"
+              size="md"
+              className="gap-2"
+              onClick={() => handleSSOLogin("google")}
+              disabled={isLoading}
+            >
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -254,7 +275,13 @@ export default function LoginPage() {
               </svg>
               Google
             </Button>
-            <Button variant="secondary" size="md" className="gap-2">
+            <Button
+              variant="secondary"
+              size="md"
+              className="gap-2"
+              onClick={() => handleSSOLogin("microsoft")}
+              disabled={isLoading}
+            >
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
                 <path d="M11.4 24H0V12.6L11.4 0v7.2H24v5.4H11.4V24zm1.2-11.4H24V24H12.6V12.6z" fill="#00A4EF"/>
               </svg>
@@ -329,9 +356,12 @@ export default function LoginPage() {
                 Request access
               </a>
             </p>
-            <div className="flex items-center justify-center gap-1 text-xs text-[var(--text-tertiary)]">
-              <Shield size={12} />
-              <span>SOC 2 Type II · GDPR · ISO 27001</span>
+            <div className="flex flex-col items-center gap-1.5 justify-center text-xs text-[var(--text-tertiary)]">
+              <div className="flex items-center gap-1">
+                <Shield size={12} />
+                <span>SOC 2 Type II · GDPR · ISO 27001</span>
+              </div>
+              <span className="text-[10px] text-[var(--text-tertiary)]/75 tracking-wider font-medium">DNAX.ai Os Version: Enterprises varent v5.02.3</span>
             </div>
           </div>
         </motion.div>

@@ -1,5 +1,5 @@
 /**
- * NEXUS OS — Font Configuration
+ * DNAX.ai Os — Font Configuration
  *
  * Provides 8 font options via next/font/google (where available)
  * with system-stack fallbacks for fonts not in Google Fonts.

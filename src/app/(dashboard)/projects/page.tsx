@@ -27,6 +27,7 @@ import {
   ProgressBar,
   Input
 } from "@/components/ui";
+import { useAppStore } from "@/lib/store";
 
 // Realistic project dataset
 const DEMO_PROJECTS = [
@@ -86,8 +87,8 @@ const DEMO_PROJECTS = [
   },
   {
     id: "p4",
-    name: "Nexus Headquarters",
-    client: "Nexus Corp",
+    name: "DNAX.ai Headquarters",
+    client: "DNAX.ai Corp",
     type: "Corporate Headquarters",
     status: "On Hold",
     priority: "High",
@@ -186,11 +187,104 @@ const itemVariants = {
 };
 
 export default function ProjectsPage() {
+  const { currentUser, isDemo } = useAppStore();
   const [view, setView] = useState<"grid" | "list" | "board">("grid");
   const [filter, setFilter] = useState<string>("All");
   const [search, setSearch] = useState<string>("");
 
-  const filteredProjects = DEMO_PROJECTS.filter((project) => {
+  const [projectsList, setProjectsList] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // New Project Form State
+  const [showNewProject, setShowNewProject] = useState(false);
+  const [newProjName, setNewProjName] = useState("");
+  const [newProjClient, setNewProjClient] = useState("");
+  const [newProjType, setNewProjType] = useState("ARCHITECTURE");
+  const [newProjPhase, setNewProjPhase] = useState("Concept");
+  const [newProjBudget, setNewProjBudget] = useState("");
+  const [newProjPriority, setNewProjPriority] = useState("MEDIUM");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Fetch projects from database if not in demo mode
+  const fetchProjects = async () => {
+    if (isDemo || !currentUser) {
+      setProjectsList(DEMO_PROJECTS);
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/projects?orgId=${currentUser.orgId}`);
+      const data = await res.json();
+      if (res.ok) {
+        const mapped = data.projects.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          client: p.client?.name || "None",
+          type: p.type,
+          status: p.status === "ACTIVE" ? "Active" : p.status === "ON_HOLD" ? "On Hold" : p.status === "COMPLETED" ? "Completed" : "Draft",
+          priority: p.priority === "URGENT" ? "Urgent" : p.priority === "HIGH" ? "High" : p.priority === "LOW" ? "Low" : "Medium",
+          budget: p.budget ? `$${(p.budget / 1000000).toFixed(1)}M` : "$0",
+          progress: p.status === "COMPLETED" ? 100 : 15,
+          dueDate: p.endDate ? new Date(p.endDate).toISOString().split("T")[0] : "TBD",
+          phase: p.status === "COMPLETED" ? "Completed" : "In Progress",
+          cover: "linear-gradient(135deg, #6366f1 0%, #3b82f6 100%)",
+          team: [{ name: currentUser.name, fallback: currentUser.name.split(" ").map((n: string) => n[0]).join("") }]
+        }));
+        setProjectsList(mapped);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchProjects();
+  }, [isDemo, currentUser]);
+
+  const handleCreateProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUser) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newProjName,
+          clientName: newProjClient,
+          type: newProjType,
+          budget: newProjBudget,
+          priority: newProjPriority,
+          phase: newProjPhase,
+          orgId: currentUser.orgId,
+          userId: currentUser.id
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to create project");
+      }
+      await fetchProjects();
+      setShowNewProject(false);
+      setNewProjName("");
+      setNewProjClient("");
+      setNewProjType("ARCHITECTURE");
+      setNewProjPhase("Concept");
+      setNewProjBudget("");
+      setNewProjPriority("MEDIUM");
+      alert(`Project "${newProjName}" successfully created!`);
+    } catch (err: any) {
+      console.error(err);
+      alert("Failed to create project: " + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const filteredProjects = projectsList.filter((project) => {
     const matchesFilter = filter === "All" || project.status === filter;
     const matchesSearch =
       project.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -240,7 +334,7 @@ export default function ProjectsPage() {
             Manage your firm's pipeline, active engagements, and archival records.
           </p>
         </div>
-        <Button className="w-full md:w-auto self-start flex items-center gap-2">
+        <Button onClick={() => setShowNewProject(true)} className="w-full md:w-auto self-start flex items-center gap-2">
           <Plus size={16} />
           New Project
         </Button>
@@ -387,7 +481,7 @@ export default function ProjectsPage() {
                     <div className="pt-3 border-t border-[var(--border)] flex items-center justify-between mt-4">
                       {/* Avatars */}
                       <div className="flex -space-x-1.5 overflow-hidden">
-                        {project.team.slice(0, 3).map((member, i) => (
+                        {project.team.slice(0, 3).map((member: any, i: number) => (
                           <Avatar
                             key={i}
                             fallback={member.fallback}
@@ -554,7 +648,7 @@ export default function ProjectsPage() {
 
                           <div className="pt-2 border-t border-[var(--border)] flex items-center justify-between">
                             <div className="flex -space-x-1">
-                              {project.team.slice(0, 3).map((member, idx) => (
+                              {project.team.slice(0, 3).map((member: any, idx: number) => (
                                 <Avatar
                                   key={idx}
                                   fallback={member.fallback}
@@ -582,6 +676,127 @@ export default function ProjectsPage() {
               );
             })}
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* New Project Setup Modal Overlay */}
+      <AnimatePresence>
+        {showNewProject && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              className="absolute inset-0 bg-black/60 backdrop-blur-md"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => !isSubmitting && setShowNewProject(false)}
+            />
+
+            <motion.div
+              className="relative z-10 w-full max-w-lg rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-2xl space-y-6"
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: "spring", duration: 0.4 }}
+            >
+              <div>
+                <h3 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
+                  <FolderKanban size={20} className="text-[var(--accent-2)]" />
+                  Create New Studio Project
+                </h3>
+                <p className="text-xs text-[var(--text-secondary)] mt-1">
+                  Add a brand new active commission to your studio workspace pipeline.
+                </p>
+              </div>
+
+              <form onSubmit={handleCreateProject} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5 col-span-2">
+                    <label className="text-xs font-semibold text-[var(--text-secondary)]">Project Name</label>
+                    <Input
+                      placeholder="e.g. Creek Tower Redesign"
+                      value={newProjName}
+                      onChange={(e) => setNewProjName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-[var(--text-secondary)]">Client Account Name</label>
+                    <Input
+                      placeholder="e.g. Emaar Properties"
+                      value={newProjClient}
+                      onChange={(e) => setNewProjClient(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-[var(--text-secondary)]">Project Commission Type</label>
+                    <select
+                      className="w-full flex h-10 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--accent-2)] transition-colors"
+                      value={newProjType}
+                      onChange={(e) => setNewProjType(e.target.value)}
+                    >
+                      <option value="ARCHITECTURE">Architecture Design</option>
+                      <option value="INTERIOR_FITOUT">Interior Fitout</option>
+                      <option value="BRAND_IDENTITY">Brand Identity</option>
+                      <option value="PRODUCTION">Production / Print</option>
+                      <option value="CONCEPT">Concept Development</option>
+                      <option value="TENDER">Tender Submission</option>
+                      <option value="RESEARCH">R&D / Feasibility Study</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-[var(--text-secondary)]">Project Active Phase</label>
+                    <Input
+                      placeholder="e.g. Design Development"
+                      value={newProjPhase}
+                      onChange={(e) => setNewProjPhase(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-[var(--text-secondary)]">Budget Allocation ($)</label>
+                    <Input
+                      type="number"
+                      placeholder="e.g. 2400000"
+                      value={newProjBudget}
+                      onChange={(e) => setNewProjBudget(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5 col-span-2">
+                    <label className="text-xs font-semibold text-[var(--text-secondary)]">Project Priority Level</label>
+                    <select
+                      className="w-full flex h-10 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--accent-2)] transition-colors"
+                      value={newProjPriority}
+                      onChange={(e) => setNewProjPriority(e.target.value)}
+                    >
+                      <option value="LOW">Low Priority</option>
+                      <option value="MEDIUM">Medium Priority</option>
+                      <option value="HIGH">High Priority</option>
+                      <option value="URGENT">Urgent Priority</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-4 border-t border-[var(--border)]">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowNewProject(false)}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="sm"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Saving Project..." : "Add Commission"}
+                  </Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

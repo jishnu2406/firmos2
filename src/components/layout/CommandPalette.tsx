@@ -99,7 +99,7 @@ export const CommandPalette: React.FC = () => {
     },
     {
       id: "nav-ai",
-      label: "NEXUS Mind",
+      label: "DNAX.ai Mind",
       description: "AI Intelligence Hub",
       icon: <Brain size={16} />,
       category: "Navigation",
@@ -137,7 +137,7 @@ export const CommandPalette: React.FC = () => {
     {
       id: "action-ai-chat",
       label: "Ask AI",
-      description: "Start a conversation with NEXUS Mind",
+      description: "Start a conversation with DNAX.ai Mind",
       icon: <Sparkles size={16} />,
       category: "Quick Actions",
       action: () => {
@@ -379,7 +379,7 @@ export const CommandPalette: React.FC = () => {
                 </div>
                 <span className="flex items-center gap-1 text-[10px] text-[var(--text-tertiary)]">
                   <Sparkles size={10} />
-                  Powered by NEXUS Mind
+                  Powered by DNAX.ai Mind
                 </span>
               </div>
             </div>

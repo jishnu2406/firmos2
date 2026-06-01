@@ -32,7 +32,7 @@ const DEMO_NOTIFICATIONS: NotificationItem[] = [
   {
     id: "1",
     type: "ai",
-    title: "NEXUS Mind",
+    title: "DNAX.ai Mind",
     description: "Weekly progress report for Sky Tower has been generated and is ready for review.",
     time: "2 min ago",
     read: false,
@@ -76,7 +76,7 @@ const DEMO_NOTIFICATIONS: NotificationItem[] = [
     id: "6",
     type: "system",
     title: "System Update",
-    description: "NEXUS OS has been updated to version 2.4.0 with new AI features.",
+    description: "DNAX.ai Os has been updated to version 5.02.3 with new AI features.",
     time: "1 day ago",
     read: true,
   },

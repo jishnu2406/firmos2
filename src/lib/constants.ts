@@ -1,8 +1,8 @@
 // NEXUS OS — Constants and Configuration
 
-export const APP_NAME = "NEXUS OS";
+export const APP_NAME = "DNAX.ai Os";
 export const APP_TAGLINE = "Command. Create. Conquer.";
-export const APP_VERSION = "1.0.0";
+export const APP_VERSION = "5.02.3";
 
 // Role hierarchy - ordered by power level (highest first)
 export const ROLES = {
@@ -139,7 +139,7 @@ export const NAV_ITEMS = [
   {
     group: "Intelligence",
     items: [
-      { name: "NEXUS Mind", href: "/ai", icon: "Brain" as const, permission: "ai:use" as PermissionKey },
+      { name: "DNAX.ai Mind", href: "/ai", icon: "Brain" as const, permission: "ai:use" as PermissionKey },
       { name: "AI Agents", href: "/ai/agents", icon: "Bot" as const, permission: "ai:agents" as PermissionKey },
       { name: "Search", href: "/search", icon: "Search" as const, permission: null },
     ],

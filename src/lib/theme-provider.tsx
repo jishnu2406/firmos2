@@ -1,5 +1,5 @@
 /**
- * NEXUS OS — Theme Provider
+ * DNAX.ai Os — Theme Provider
  *
  * React context provider for theme and font management.
  * Reads/writes preferences to localStorage. Sets the `data-theme` attribute
@@ -139,8 +139,8 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
    Storage Keys
    ============================================================================ */
 
-const STORAGE_KEY_THEME = "nexus-os-theme";
-const STORAGE_KEY_FONT = "nexus-os-font";
+const STORAGE_KEY_THEME = "dnax-os-theme";
+const STORAGE_KEY_FONT = "dnax-os-font";
 const DEFAULT_THEME: ThemeId = "obsidian";
 const DEFAULT_FONT: FontId = "inter";
 

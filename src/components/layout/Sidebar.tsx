@@ -105,8 +105,8 @@ export const Sidebar: React.FC = () => {
     >
       {/* Org header */}
       <div className="flex items-center gap-3 px-4 h-14 border-b border-[var(--border)] shrink-0">
-        <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[var(--accent-2)] to-[var(--accent)] flex items-center justify-center text-white font-bold text-sm shrink-0">
-          N
+        <div className="h-8 w-8 overflow-hidden rounded-lg bg-gradient-to-br from-[var(--accent-2)] to-[var(--accent)] flex items-center justify-center text-white font-bold text-sm shrink-0">
+          <img src="/logo.png" alt="Logo" className="h-full w-full object-cover" />
         </div>
         <AnimatePresence>
           {isExpanded && (
@@ -119,10 +119,11 @@ export const Sidebar: React.FC = () => {
             >
               <div className="truncate">
                 <p className="text-sm font-semibold text-[var(--text-primary)] truncate">
-                  {currentUser?.orgName || "NEXUS OS"}
+                  {currentUser?.orgName || "DNAX.ai Os"}
                 </p>
-                <p className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider">
-                  {currentUser?.orgPlan || "Enterprise"}
+                <p className="text-[9px] text-[var(--text-tertiary)] uppercase tracking-wider flex flex-col leading-tight">
+                  <span>{currentUser?.orgPlan || "Enterprise"}</span>
+                  <span className="text-[8px] text-[var(--text-tertiary)]/75 mt-0.5 normal-case font-medium">v5.02.3 Enterprises</span>
                 </p>
               </div>
               <Button variant="ghost" size="icon-sm">
@@ -257,7 +258,7 @@ export const Sidebar: React.FC = () => {
                 transition={{ duration: 0.1 }}
               >
                 <p className="text-sm font-medium text-[var(--accent-2)]">
-                  NEXUS Mind
+                  DNAX.ai Mind
                 </p>
                 <p className="text-[10px] text-[var(--text-tertiary)]">
                   AI Assistant

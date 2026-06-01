@@ -1,5 +1,5 @@
 /**
- * NEXUS OS — Utility Functions
+ * DNAX.ai Os — Utility Functions
  *
  * Core utilities for classNames, formatting, and timing helpers.
  * All functions are fully typed with zero external dependencies beyond

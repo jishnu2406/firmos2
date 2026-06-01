@@ -68,7 +68,7 @@ export default function AIHubPage() {
               <Sparkles size={11} />
               AI-Native Intelligence Hub
             </div>
-            <h1 className="text-3xl font-extrabold text-[var(--text-primary)] tracking-tight">NEXUS Mind</h1>
+            <h1 className="text-3xl font-extrabold text-[var(--text-primary)] tracking-tight">DNAX.ai Mind</h1>
             <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
               Consolidate firm knowledge, execute autonomous agents, optimize engineering schedules, and chat directly with drawing vaults through semantic RAG networks.
             </p>

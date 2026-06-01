@@ -3,7 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/lib/theme-provider";
 
 export const metadata: Metadata = {
-  title: "NEXUS OS — Command. Create. Conquer.",
+  title: "DNAX.ai Os — Command. Create. Conquer.",
   description:
     "Elite AI-native command center for architectural, interior design, production, and brand-focused MNCs. Fortune-500-grade workspace management.",
   keywords: [
@@ -14,9 +14,9 @@ export const metadata: Metadata = {
     "enterprise",
     "SaaS",
   ],
-  authors: [{ name: "NEXUS OS" }],
+  authors: [{ name: "DNAX.ai Os" }],
   openGraph: {
-    title: "NEXUS OS — Command. Create. Conquer.",
+    title: "DNAX.ai Os — Command. Create. Conquer.",
     description: "Elite AI-native command center for design-focused MNCs.",
     type: "website",
   },
@@ -34,7 +34,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: `
           (function() {
             try {
-              var theme = localStorage.getItem('nexus-os-theme');
+              var theme = localStorage.getItem('dnax-os-theme');
               if (theme) {
                 document.documentElement.setAttribute('data-theme', theme);
               }

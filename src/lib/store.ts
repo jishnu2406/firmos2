@@ -1,4 +1,4 @@
-// NEXUS OS — Zustand Store
+// DNAX.ai Os — Zustand Store
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
@@ -63,6 +63,7 @@ interface AppState {
   // User
   currentUser: CurrentUser | null;
   preferences: UserPreferences;
+  isDemo: boolean;
 
   // Notifications
   unreadNotifications: number;
@@ -81,6 +82,7 @@ interface AppState {
   setActivePage: (page: string) => void;
   setSearchQuery: (query: string) => void;
   setCurrentUser: (user: CurrentUser | null) => void;
+  setIsDemo: (isDemo: boolean) => void;
   updatePreferences: (prefs: Partial<UserPreferences>) => void;
   setUnreadNotifications: (count: number) => void;
 }
@@ -101,6 +103,7 @@ export const useAppStore = create<AppState>()(
 
       // Demo user
       currentUser: null,
+      isDemo: false,
 
       // Default preferences
       preferences: {
@@ -148,6 +151,8 @@ export const useAppStore = create<AppState>()(
         set({ searchQuery: query }),
       setCurrentUser: (user) =>
         set({ currentUser: user }),
+      setIsDemo: (isDemo) =>
+        set({ isDemo }),
       updatePreferences: (prefs) =>
         set((state) => ({
           preferences: { ...state.preferences, ...prefs },
@@ -156,10 +161,11 @@ export const useAppStore = create<AppState>()(
         set({ unreadNotifications: count }),
     }),
     {
-      name: "nexus-os-store",
+      name: "dnax-os-store",
       partialize: (state) => ({
         sidebarCollapsed: state.sidebarCollapsed,
         preferences: state.preferences,
+        isDemo: state.isDemo,
       }),
     }
   )

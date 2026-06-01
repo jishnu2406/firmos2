@@ -140,7 +140,7 @@ export const AIPanel: React.FC = () => {
                 </div>
                 <div>
                   <h2 className="text-sm font-semibold text-[var(--text-primary)]">
-                    NEXUS Mind
+                    DNAX.ai Mind
                   </h2>
                   <p className="text-[10px] text-[var(--success)]">Online</p>
                 </div>
@@ -185,7 +185,7 @@ export const AIPanel: React.FC = () => {
                     <Sparkles size={24} className="text-white" />
                   </div>
                   <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-1">
-                    Welcome to NEXUS Mind
+                    Welcome to DNAX.ai Mind
                   </h3>
                   <p className="text-sm text-[var(--text-tertiary)] mb-6 max-w-sm">
                     Your AI-powered workspace assistant. Ask me anything about
@@ -294,7 +294,7 @@ export const AIPanel: React.FC = () => {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Ask NEXUS Mind anything..."
+                  placeholder="Ask DNAX.ai Mind anything..."
                   rows={1}
                   className="flex-1 bg-transparent text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none resize-none max-h-24 py-1"
                 />
@@ -312,7 +312,7 @@ export const AIPanel: React.FC = () => {
                 </Button>
               </div>
               <p className="text-[10px] text-[var(--text-tertiary)] mt-1.5 text-center">
-                NEXUS Mind uses Claude Sonnet for intelligent responses
+                DNAX.ai Mind uses Claude Sonnet for intelligent responses
               </p>
             </div>
           </motion.div>
