@@ -1,0 +1,582 @@
+/* ============================================================================
+   NEXUS OS — Global Styles
+   Base reset, typography, animations, glassmorphism utilities, focus rings
+   ============================================================================ */
+
+/* --- Tailwind v4 entry point --- */
+@import "tailwindcss";
+
+/* --- Theme variables --- */
+@import "../styles/themes.css";
+
+/* ============================================================================
+   Tailwind v4 Theme Extension — @theme inline
+   Maps CSS custom properties to Tailwind utility classes
+   ============================================================================ */
+@theme inline {
+  /* Core colors */
+  --color-bg: var(--bg);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-active: var(--surface-active);
+
+  --color-border: var(--border);
+  --color-border-hover: var(--border-hover);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-inverse: var(--text-inverse);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-2: var(--accent-2);
+  --color-accent-2-hover: var(--accent-2-hover);
+
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-info: var(--info);
+
+  --color-glass-bg: var(--glass-bg);
+  --color-glass-border: var(--glass-border);
+
+  --color-skeleton-base: var(--skeleton-base);
+  --color-skeleton-shine: var(--skeleton-shine);
+
+  --color-scrollbar-track: var(--scrollbar-track);
+  --color-scrollbar-thumb: var(--scrollbar-thumb);
+
+  /* Font families */
+  --font-sans: var(--font-family-sans, "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif);
+  --font-mono: var(--font-family-mono, "JetBrains Mono", ui-monospace, "Cascadia Code", monospace);
+  --font-display: var(--font-family-display, "Inter", ui-sans-serif, system-ui, sans-serif);
+
+  /* Border radius tokens */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
+  --radius-full: 9999px;
+
+  /* Custom spacing */
+  --spacing-4\.5: 1.125rem;
+  --spacing-13: 3.25rem;
+  --spacing-15: 3.75rem;
+  --spacing-18: 4.5rem;
+  --spacing-88: 22rem;
+  --spacing-92: 23rem;
+  --spacing-100: 25rem;
+  --spacing-120: 30rem;
+  --spacing-128: 32rem;
+  --spacing-144: 36rem;
+
+  /* Breakpoints */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1920px;
+
+  /* Box shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.08);
+  --shadow-float: 0 8px 32px rgba(0, 0, 0, 0.16), 0 4px 8px rgba(0, 0, 0, 0.1);
+  --shadow-overlay: 0 16px 48px rgba(0, 0, 0, 0.24), 0 8px 16px rgba(0, 0, 0, 0.12);
+  --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.15);
+  --shadow-accent: 0 0 24px color-mix(in srgb, var(--accent) 15%, transparent);
+
+  /* Animations */
+  --animate-shimmer: shimmer 2s ease-in-out infinite;
+  --animate-fade-in: fadeIn 200ms ease-out;
+  --animate-fade-up: fadeUp 300ms ease-out;
+  --animate-fade-down: fadeDown 300ms ease-out;
+  --animate-scale-in: scaleIn 200ms ease-out;
+  --animate-slide-in-right: slideInRight 300ms ease-out;
+  --animate-slide-in-left: slideInLeft 300ms ease-out;
+  --animate-spin-slow: spin 3s linear infinite;
+  --animate-pulse-soft: pulseSoft 2s ease-in-out infinite;
+  --animate-count-up: countUp 600ms ease-out forwards;
+}
+
+/* ============================================================================
+   Base Reset & Defaults
+   ============================================================================ */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "cv11", "ss01", "ss03";
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    tab-size: 4;
+    hanging-punctuation: first last;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    min-height: 100dvh;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Accessible focus ring — visible on keyboard focus only */
+  :focus-visible {
+    outline: 2px solid var(--accent-2);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Selection colors */
+  ::selection {
+    background-color: color-mix(in srgb, var(--accent-2) 30%, transparent);
+    color: var(--text-primary);
+  }
+
+  ::target-text {
+    background-color: color-mix(in srgb, var(--accent-2) 25%, transparent);
+  }
+
+  /* Improve media defaults */
+  img,
+  picture,
+  video,
+  canvas,
+  svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Form element inherits */
+  input,
+  button,
+  textarea,
+  select {
+    font: inherit;
+    color: inherit;
+  }
+
+  /* Anchor reset */
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  /* Table border collapse */
+  table {
+    border-collapse: collapse;
+  }
+
+  /* Heading balance */
+  h1, h2, h3, h4, h5, h6 {
+    text-wrap: balance;
+    line-height: 1.2;
+    font-weight: 600;
+  }
+
+  /* Paragraph wrap */
+  p {
+    text-wrap: pretty;
+    max-width: 75ch;
+  }
+
+  /* List reset */
+  ul, ol {
+    list-style: none;
+  }
+
+  /* Remove spinner for number inputs */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+}
+
+/* ============================================================================
+   Typography Scale Utilities
+   ============================================================================ */
+@layer utilities {
+  .text-display-xl {
+    font-size: 3.5rem;
+    line-height: 1.08;
+    letter-spacing: -0.04em;
+    font-weight: 700;
+  }
+
+  .text-display-lg {
+    font-size: 3rem;
+    line-height: 1.1;
+    letter-spacing: -0.035em;
+    font-weight: 700;
+  }
+
+  .text-display {
+    font-size: 2.25rem;
+    line-height: 1.12;
+    letter-spacing: -0.03em;
+    font-weight: 700;
+  }
+
+  .text-heading-xl {
+    font-size: 1.875rem;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+    font-weight: 600;
+  }
+
+  .text-heading-lg {
+    font-size: 1.5rem;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    font-weight: 600;
+  }
+
+  .text-heading {
+    font-size: 1.25rem;
+    line-height: 1.3;
+    letter-spacing: -0.015em;
+    font-weight: 600;
+  }
+
+  .text-heading-sm {
+    font-size: 1.125rem;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    font-weight: 600;
+  }
+
+  .text-body-lg {
+    font-size: 1rem;
+    line-height: 1.6;
+    letter-spacing: -0.006em;
+  }
+
+  .text-body {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    letter-spacing: -0.003em;
+  }
+
+  .text-body-sm {
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    letter-spacing: 0;
+  }
+
+  .text-caption {
+    font-size: 0.75rem;
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+  }
+
+  .text-overline {
+    font-size: 0.6875rem;
+    line-height: 1.3;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .text-mono {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    letter-spacing: 0;
+    font-variant-ligatures: none;
+  }
+
+  /* Gradient text */
+  .text-gradient {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+/* ============================================================================
+   Keyframe Animations
+   ============================================================================ */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulseSoft {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.7; }
+}
+
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================================================
+   Skeleton Shimmer
+   ============================================================================ */
+@layer utilities {
+  .skeleton {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--skeleton-base);
+    border-radius: var(--radius-md);
+  }
+
+  .skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--skeleton-shine) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s ease-in-out infinite;
+  }
+}
+
+/* ============================================================================
+   Glassmorphism Utilities (also in themes.css — these add Tailwind-layer support)
+   ============================================================================ */
+@layer utilities {
+  .glass {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+
+  .glass-strong {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(40px) saturate(200%);
+    -webkit-backdrop-filter: blur(40px) saturate(200%);
+  }
+
+  .glass-subtle {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+  }
+}
+
+/* ============================================================================
+   Micro-Interactions — Button press, card hover lift
+   ============================================================================ */
+@layer utilities {
+  /* Button press — scale down on active */
+  .press {
+    transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+  }
+
+  .press:active {
+    transform: scale(0.97);
+  }
+
+  /* Card hover lift */
+  .hover-lift {
+    transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform, box-shadow;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-elevated);
+  }
+
+  /* Subtle hover glow */
+  .hover-glow {
+    transition: box-shadow 300ms ease;
+  }
+
+  .hover-glow:hover {
+    box-shadow: var(--shadow-glow);
+  }
+
+  /* Interactive border on hover */
+  .hover-border {
+    border-color: var(--border);
+    transition: border-color 200ms ease;
+  }
+
+  .hover-border:hover {
+    border-color: var(--border-hover);
+  }
+
+  /* Fade interaction */
+  .hover-fade {
+    transition: opacity 200ms ease;
+  }
+
+  .hover-fade:hover {
+    opacity: 0.8;
+  }
+}
+
+/* ============================================================================
+   Noise overlay (inline utility)
+   ============================================================================ */
+@layer utilities {
+  .noise {
+    position: relative;
+  }
+
+  .noise::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.05;
+    z-index: 1;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 256px 256px;
+    mix-blend-mode: overlay;
+  }
+}
+
+/* ============================================================================
+   Focus Ring Styles (accessible, works with data-focus-visible-added)
+   ============================================================================ */
+@layer utilities {
+  .focus-ring {
+    outline: none;
+  }
+
+  .focus-ring:focus-visible {
+    outline: 2px solid var(--accent-2);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  .focus-ring-inset:focus-visible {
+    outline: 2px solid var(--accent-2);
+    outline-offset: -2px;
+  }
+}
+
+/* ============================================================================
+   Scrollbar Utilities
+   ============================================================================ */
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}

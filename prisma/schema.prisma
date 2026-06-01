@@ -1,0 +1,760 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// ENUMS (SQLite doesn't support native enums, so we use string fields with
+// comments documenting valid values. Validation happens at app layer.)
+// ============================================================================
+
+// OrganizationType: ARCHITECTURE | INTERIOR_DESIGN | PRODUCTION | GRAPHIC_DESIGN | BRAND_AGENCY | MIXED
+// PlanType: FREE | STARTER | PROFESSIONAL | ENTERPRISE
+// ProjectType: ARCHITECTURE | INTERIOR_FITOUT | BRAND_IDENTITY | PRODUCTION | CONCEPT | TENDER | RESEARCH
+// ProjectStatus: DRAFT | ACTIVE | ON_HOLD | COMPLETED | ARCHIVED
+// Priority: LOW | MEDIUM | HIGH | URGENT
+// TaskStatus: TODO | IN_PROGRESS | IN_REVIEW | DONE | CANCELLED
+// AssetType: IMAGE | DOCUMENT | DRAWING | RENDER | VIDEO | AUDIO | MODEL_3D | OTHER
+// AssetStatus: DRAFT | IN_REVIEW | APPROVED | PUBLISHED | ARCHIVED
+// InvoiceStatus: DRAFT | SENT | PAID | OVERDUE | CANCELLED
+// ChannelType: PROJECT | DEPARTMENT | GENERAL | DIRECT
+// MessageType: TEXT | SYSTEM | AI
+// AIMessageRole: USER | ASSISTANT | SYSTEM
+// AIAgentRunStatus: PENDING | RUNNING | COMPLETED | FAILED
+// LeaveType: ANNUAL | SICK | PERSONAL | MATERNITY | PATERNITY | OTHER
+// LeaveStatus: PENDING | APPROVED | REJECTED
+// PhaseStatus: NOT_STARTED | IN_PROGRESS | COMPLETED | ON_HOLD
+// MilestoneStatus: PENDING | IN_PROGRESS | COMPLETED | MISSED
+
+// ============================================================================
+// AUTH MODELS (NextAuth compatible)
+// ============================================================================
+
+/// @security Row-Level Security: Users can only read/update their own record.
+/// Admins can read all users in their org.
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  name           String?
+  passwordHash   String?
+  image          String?
+  emailVerified  DateTime?
+  twoFactorEnabled Boolean @default(false)
+  preferences    String?  // Json stored as text (SQLite)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Auth relations
+  accounts       Account[]
+  sessions       Session[]
+
+  // Org relations
+  memberships    OrganizationMember[]
+  departmentsHeaded Department[] @relation("DepartmentHead")
+
+  // Project relations
+  createdProjects  Project[]       @relation("ProjectCreator")
+  projectMembers   ProjectMember[]
+
+  // Task relations
+  assignedTasks    Task[]          @relation("TaskAssignee")
+  createdTasks     Task[]          @relation("TaskCreator")
+  taskComments     TaskComment[]
+
+  // Asset relations
+  uploadedAssets   Asset[]
+
+  // Finance relations
+  createdInvoices  Invoice[]       @relation("InvoiceCreator")
+  timeEntries      TimeEntry[]
+
+  // Communication relations
+  channelMembers   ChannelMember[]
+  messages         Message[]
+
+  // AI relations
+  aiConversations  AIConversation[]
+
+  // System relations
+  notifications    Notification[]
+  auditLogs        AuditLog[]
+  leaves           Leave[]         @relation("LeaveUser")
+  approvedLeaves   Leave[]         @relation("LeaveApprover")
+
+  @@index([email])
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ============================================================================
+// ORGANIZATION MODELS
+// ============================================================================
+
+/// @security Row-Level Security: All queries must be scoped by orgId.
+model Organization {
+  id         String   @id @default(cuid())
+  slug       String   @unique
+  name       String
+  type       String   @default("MIXED") // OrganizationType enum
+  plan       String   @default("FREE")  // PlanType enum
+  domain     String?
+  logoUrl    String?
+  brandColor String?  @default("#6366f1")
+  settings   String?  // Json
+  aiConfig   String?  // Json
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  members      OrganizationMember[]
+  departments  Department[]
+  projects     Project[]
+  clients      Client[]
+  assets       Asset[]
+  invoices     Invoice[]
+  timeEntries  TimeEntry[]
+  channels     Channel[]
+  aiConversations AIConversation[]
+  aiAgents     AIAgent[]
+  notifications Notification[]
+  auditLogs    AuditLog[]
+  leaves       Leave[]
+  tasks        Task[]
+
+  @@index([slug])
+  @@map("organizations")
+}
+
+/// @security Row-Level Security: Scoped by orgId. Users can only see members of their own org.
+model OrganizationMember {
+  id         String   @id @default(cuid())
+  orgId      String
+  userId     String
+  role       String   @default("MEMBER") // OWNER | ADMIN | PRINCIPAL | DIRECTOR | SENIOR_ARCHITECT | ARCHITECT | DESIGNER | PROJECT_MANAGER | INTERN | FINANCE | HR | MEMBER
+  department String?
+  title      String?
+  joinedAt   DateTime @default(now())
+  isActive   Boolean  @default(true)
+
+  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, userId])
+  @@index([orgId])
+  @@index([userId])
+  @@map("organization_members")
+}
+
+/// @security Row-Level Security: Scoped by orgId.
+model Department {
+  id          String   @id @default(cuid())
+  orgId       String
+  name        String
+  description String?
+  headId      String?
+  parentId    String?  // Self-referencing for hierarchy
+  createdAt   DateTime @default(now())
+
+  org      Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  head     User?        @relation("DepartmentHead", fields: [headId], references: [id])
+  parent   Department?  @relation("DepartmentHierarchy", fields: [parentId], references: [id])
+  children Department[] @relation("DepartmentHierarchy")
+
+  @@index([orgId])
+  @@index([parentId])
+  @@map("departments")
+}
+
+// ============================================================================
+// PROJECT MODELS
+// ============================================================================
+
+/// @security Row-Level Security: Scoped by orgId. Project members can see project details.
+model Project {
+  id            String   @id @default(cuid())
+  orgId         String
+  name          String
+  slug          String
+  description   String?
+  type          String   @default("ARCHITECTURE") // ProjectType enum
+  status        String   @default("DRAFT")        // ProjectStatus enum
+  priority      String   @default("MEDIUM")       // Priority enum
+  coverImageUrl String?
+  budget        Float?
+  actualCost    Float?
+  startDate     DateTime?
+  endDate       DateTime?
+  clientId      String?
+  createdById   String
+  location      String?
+  latitude      Float?
+  longitude     Float?
+  settings      String?  // Json
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  org         Organization    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  client      Client?         @relation(fields: [clientId], references: [id])
+  createdBy   User            @relation("ProjectCreator", fields: [createdById], references: [id])
+  phases      ProjectPhase[]
+  members     ProjectMember[]
+  milestones  ProjectMilestone[]
+  tasks       Task[]
+  assets      Asset[]
+  invoices    Invoice[]
+  timeEntries TimeEntry[]
+  channels    Channel[]
+
+  @@unique([orgId, slug])
+  @@index([orgId])
+  @@index([clientId])
+  @@index([createdById])
+  @@index([status])
+  @@map("projects")
+}
+
+model ProjectPhase {
+  id          String   @id @default(cuid())
+  projectId   String
+  name        String
+  order       Int      @default(0)
+  status      String   @default("NOT_STARTED") // PhaseStatus enum
+  startDate   DateTime?
+  endDate     DateTime?
+  description String?
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks   Task[]
+
+  @@index([projectId])
+  @@map("project_phases")
+}
+
+model ProjectMember {
+  id         String   @id @default(cuid())
+  projectId  String
+  userId     String
+  role       String   @default("MEMBER") // LEAD | ARCHITECT | DESIGNER | ENGINEER | MEMBER
+  allocation Float    @default(100)       // Percentage allocation
+  joinedAt   DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+  @@map("project_members")
+}
+
+model ProjectMilestone {
+  id          String    @id @default(cuid())
+  projectId   String
+  name        String
+  description String?
+  dueDate     DateTime
+  completedAt DateTime?
+  status      String    @default("PENDING") // MilestoneStatus enum
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("project_milestones")
+}
+
+// ============================================================================
+// TASK MODELS
+// ============================================================================
+
+/// @security Row-Level Security: Scoped by orgId. Assignees and project members can view.
+model Task {
+  id             String    @id @default(cuid())
+  projectId      String
+  orgId          String
+  title          String
+  description    String?
+  status         String    @default("TODO") // TaskStatus enum
+  priority       String    @default("MEDIUM") // Priority enum
+  assigneeId     String?
+  creatorId      String
+  dueDate        DateTime?
+  estimatedHours Float?
+  actualHours    Float?
+  parentTaskId   String?   // Self-referencing for subtasks
+  order          Int       @default(0)
+  phaseId        String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  project    Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  org        Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  assignee   User?         @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  creator    User          @relation("TaskCreator", fields: [creatorId], references: [id])
+  parentTask Task?         @relation("TaskHierarchy", fields: [parentTaskId], references: [id])
+  subtasks   Task[]        @relation("TaskHierarchy")
+  phase      ProjectPhase? @relation(fields: [phaseId], references: [id])
+  comments   TaskComment[]
+  attachments TaskAttachment[]
+
+  @@index([projectId])
+  @@index([orgId])
+  @@index([assigneeId])
+  @@index([creatorId])
+  @@index([status])
+  @@index([parentTaskId])
+  @@index([phaseId])
+  @@map("tasks")
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  taskId    String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([taskId])
+  @@index([userId])
+  @@map("task_comments")
+}
+
+model TaskAttachment {
+  id        String   @id @default(cuid())
+  taskId    String
+  assetId   String
+  createdAt DateTime @default(now())
+
+  task  Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  asset Asset @relation(fields: [assetId], references: [id])
+
+  @@index([taskId])
+  @@index([assetId])
+  @@map("task_attachments")
+}
+
+// ============================================================================
+// CLIENT MODELS
+// ============================================================================
+
+/// @security Row-Level Security: Scoped by orgId.
+model Client {
+  id        String   @id @default(cuid())
+  orgId     String
+  name      String
+  email     String?
+  phone     String?
+  company   String?
+  industry  String?
+  website   String?
+  address   String?
+  notes     String?
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  org       Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  contacts  ClientContact[]
+  projects  Project[]
+  invoices  Invoice[]
+
+  @@index([orgId])
+  @@index([email])
+  @@map("clients")
+}
+
+model ClientContact {
+  id        String  @id @default(cuid())
+  clientId  String
+  name      String
+  email     String?
+  phone     String?
+  role      String?
+  isPrimary Boolean @default(false)
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@map("client_contacts")
+}
+
+// ============================================================================
+// ASSET MODELS
+// ============================================================================
+
+/// @security Row-Level Security: Scoped by orgId. Optionally scoped by projectId.
+model Asset {
+  id            String   @id @default(cuid())
+  orgId         String
+  projectId     String?
+  name          String
+  type          String   @default("OTHER") // AssetType enum
+  url           String
+  thumbnailUrl  String?
+  size          Int      @default(0) // bytes
+  mimeType      String?
+  tags          String?  // Json array stored as text
+  metadata      String?  // Json stored as text
+  status        String   @default("DRAFT") // AssetStatus enum
+  uploadedById  String
+  version       Int      @default(1)
+  parentAssetId String?  // Self-ref for versioning
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  org          Organization     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  project      Project?         @relation(fields: [projectId], references: [id])
+  uploadedBy   User             @relation(fields: [uploadedById], references: [id])
+  parentAsset  Asset?           @relation("AssetVersions", fields: [parentAssetId], references: [id])
+  childVersions Asset[]         @relation("AssetVersions")
+  taskAttachments TaskAttachment[]
+
+  @@index([orgId])
+  @@index([projectId])
+  @@index([uploadedById])
+  @@index([type])
+  @@index([status])
+  @@index([parentAssetId])
+  @@map("assets")
+}
+
+// ============================================================================
+// FINANCE MODELS
+// ============================================================================
+
+/// @security Row-Level Security: Scoped by orgId. Only FINANCE and ADMIN roles.
+model Invoice {
+  id              String    @id @default(cuid())
+  orgId           String
+  projectId       String?
+  clientId        String?
+  number          String    @unique
+  status          String    @default("DRAFT") // InvoiceStatus enum
+  amount          Float     @default(0)
+  currency        String    @default("USD")
+  tax             Float     @default(0)
+  total           Float     @default(0)
+  dueDate         DateTime?
+  paidAt          DateTime?
+  stripePaymentId String?
+  lineItems       String?   // Json
+  notes           String?
+  createdById     String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  project   Project?     @relation(fields: [projectId], references: [id])
+  client    Client?      @relation(fields: [clientId], references: [id])
+  createdBy User         @relation("InvoiceCreator", fields: [createdById], references: [id])
+
+  @@index([orgId])
+  @@index([projectId])
+  @@index([clientId])
+  @@index([status])
+  @@index([number])
+  @@map("invoices")
+}
+
+/// @security Row-Level Security: Scoped by orgId. Users can see their own entries.
+model TimeEntry {
+  id          String   @id @default(cuid())
+  orgId       String
+  projectId   String
+  userId      String
+  taskId      String?
+  description String?
+  hours       Float    @default(0)
+  date        DateTime
+  billable    Boolean  @default(true)
+  rate        Float?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  org     Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  project Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User         @relation(fields: [userId], references: [id])
+
+  @@index([orgId])
+  @@index([projectId])
+  @@index([userId])
+  @@index([date])
+  @@map("time_entries")
+}
+
+// ============================================================================
+// COMMUNICATION MODELS
+// ============================================================================
+
+/// @security Row-Level Security: Scoped by orgId. Private channels visible only to members.
+model Channel {
+  id          String   @id @default(cuid())
+  orgId       String
+  name        String
+  description String?
+  type        String   @default("GENERAL") // ChannelType enum
+  projectId   String?
+  isPrivate   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  org      Organization    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  project  Project?        @relation(fields: [projectId], references: [id])
+  members  ChannelMember[]
+  messages Message[]
+
+  @@index([orgId])
+  @@index([projectId])
+  @@index([type])
+  @@map("channels")
+}
+
+model ChannelMember {
+  id         String    @id @default(cuid())
+  channelId  String
+  userId     String
+  role       String    @default("MEMBER") // ADMIN | MEMBER
+  joinedAt   DateTime  @default(now())
+  lastReadAt DateTime?
+
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, userId])
+  @@index([channelId])
+  @@index([userId])
+  @@map("channel_members")
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  channelId   String
+  userId      String
+  content     String
+  type        String   @default("TEXT") // MessageType enum
+  replyToId   String?  // Self-ref for threads
+  attachments String?  // Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  channel  Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id])
+  replyTo  Message? @relation("MessageThread", fields: [replyToId], references: [id])
+  replies  Message[] @relation("MessageThread")
+
+  @@index([channelId])
+  @@index([userId])
+  @@index([replyToId])
+  @@index([createdAt])
+  @@map("messages")
+}
+
+// ============================================================================
+// AI MODELS
+// ============================================================================
+
+/// @security Row-Level Security: Scoped by orgId and userId.
+model AIConversation {
+  id        String   @id @default(cuid())
+  orgId     String
+  userId    String
+  title     String
+  context   String?  // Json
+  model     String   @default("gpt-4o")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  org      Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user     User         @relation(fields: [userId], references: [id])
+  messages AIMessage[]
+
+  @@index([orgId])
+  @@index([userId])
+  @@map("ai_conversations")
+}
+
+model AIMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  role           String   @default("USER") // AIMessageRole enum
+  content        String
+  model          String?
+  tokensUsed     Int?
+  costCents      Float?
+  createdAt      DateTime @default(now())
+
+  conversation AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@map("ai_messages")
+}
+
+/// @security Row-Level Security: Scoped by orgId.
+model AIAgent {
+  id          String    @id @default(cuid())
+  orgId       String
+  name        String
+  type        String    // DESIGN_REVIEW | CODE_ANALYSIS | MATERIAL_SUGGEST | COST_ESTIMATE | SCHEDULING | REPORTING
+  description String?
+  config      String?   // Json
+  isActive    Boolean   @default(true)
+  lastRunAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  runs AIAgentRun[]
+
+  @@index([orgId])
+  @@index([type])
+  @@map("ai_agents")
+}
+
+model AIAgentRun {
+  id          String    @id @default(cuid())
+  agentId     String
+  status      String    @default("PENDING") // AIAgentRunStatus enum
+  input       String?   // Json
+  output      String?   // Json
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  error       String?
+
+  agent AIAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@index([status])
+  @@map("ai_agent_runs")
+}
+
+// ============================================================================
+// SYSTEM MODELS
+// ============================================================================
+
+/// @security Row-Level Security: Scoped by orgId and userId.
+model Notification {
+  id        String    @id @default(cuid())
+  orgId     String
+  userId    String
+  type      String    // TASK_ASSIGNED | TASK_COMPLETED | MENTION | INVOICE_PAID | PROJECT_UPDATE | SYSTEM
+  title     String
+  message   String
+  data      String?   // Json
+  read      Boolean   @default(false)
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  // Relations
+  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+/// @security Row-Level Security: Scoped by orgId. Read-only append log.
+model AuditLog {
+  id        String   @id @default(cuid())
+  orgId     String
+  userId    String?
+  action    String   // CREATE | UPDATE | DELETE | LOGIN | LOGOUT | EXPORT | INVITE
+  entity    String   // The model name: Project, Task, Invoice, etc.
+  entityId  String?
+  changes   String?  // Json diff of old/new values
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user User?        @relation(fields: [userId], references: [id])
+
+  @@index([orgId])
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+/// @security Row-Level Security: Scoped by orgId. Users see own leaves, managers see team.
+model Leave {
+  id           String    @id @default(cuid())
+  orgId        String
+  userId       String
+  type         String    @default("ANNUAL") // LeaveType enum
+  startDate    DateTime
+  endDate      DateTime
+  status       String    @default("PENDING") // LeaveStatus enum
+  approvedById String?
+  notes        String?
+  createdAt    DateTime  @default(now())
+
+  // Relations
+  org        Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user       User         @relation("LeaveUser", fields: [userId], references: [id])
+  approvedBy User?        @relation("LeaveApprover", fields: [approvedById], references: [id])
+
+  @@index([orgId])
+  @@index([userId])
+  @@index([status])
+  @@map("leaves")
+}

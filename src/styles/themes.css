@@ -1,0 +1,450 @@
+/* ============================================================================
+   NEXUS OS — Theme Definitions
+   8 production-quality themes with glassmorphism, noise, and scrollbar support
+   ============================================================================ */
+
+/* ---------------------------------------------------------------------------
+   Base transition layer — smooth 300ms color transitions everywhere
+   --------------------------------------------------------------------------- */
+:root,
+:root *,
+:root *::before,
+:root *::after {
+  transition-property: color, background-color, border-color, box-shadow,
+    outline-color, fill, stroke, opacity, text-decoration-color;
+  transition-duration: 300ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root,
+  :root *,
+  :root *::before,
+  :root *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ============================================================================
+   1. OBSIDIAN — Default Dark
+   ============================================================================ */
+:root,
+:root[data-theme="obsidian"] {
+  /* Backgrounds */
+  --bg: #0a0a0a;
+  --bg-secondary: #050505;
+  --surface: #111111;
+  --surface-hover: #171717;
+  --surface-active: #1c1c1c;
+
+  /* Borders */
+  --border: #1f1f1f;
+  --border-hover: #2e2e2e;
+
+  /* Typography */
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #71717a;
+  --text-inverse: #0a0a0a;
+
+  /* Accents */
+  --accent: #ffffff;
+  --accent-hover: #e5e5e5;
+  --accent-2: #6366f1;
+  --accent-2-hover: #818cf8;
+
+  /* Semantic */
+  --success: #22c55e;
+  --warning: #eab308;
+  --error: #ef4444;
+  --info: #3b82f6;
+
+  /* Glassmorphism */
+  --glass-bg: rgba(17, 17, 17, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.06);
+
+  /* Skeleton loading */
+  --skeleton-base: #1a1a1a;
+  --skeleton-shine: #2a2a2a;
+
+  /* Scrollbar */
+  --scrollbar-track: #0a0a0a;
+  --scrollbar-thumb: #2a2a2a;
+
+  /* Meta */
+  color-scheme: dark;
+}
+
+/* ============================================================================
+   2. ARCTIC — Crisp Light
+   ============================================================================ */
+:root[data-theme="arctic"] {
+  --bg: #f8f8f8;
+  --bg-secondary: #f0f0f0;
+  --surface: #ffffff;
+  --surface-hover: #f5f5f5;
+  --surface-active: #ebebeb;
+
+  --border: #e5e5e5;
+  --border-hover: #d4d4d4;
+
+  --text-primary: #0a0a0a;
+  --text-secondary: #525252;
+  --text-tertiary: #a3a3a3;
+  --text-inverse: #fafafa;
+
+  --accent: #000000;
+  --accent-hover: #1a1a1a;
+  --accent-2: #6366f1;
+  --accent-2-hover: #4f46e5;
+
+  --success: #16a34a;
+  --warning: #ca8a04;
+  --error: #dc2626;
+  --info: #2563eb;
+
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(0, 0, 0, 0.06);
+
+  --skeleton-base: #e5e5e5;
+  --skeleton-shine: #f5f5f5;
+
+  --scrollbar-track: #f0f0f0;
+  --scrollbar-thumb: #c4c4c4;
+
+  color-scheme: light;
+}
+
+/* ============================================================================
+   3. MIDNIGHT NAVY
+   ============================================================================ */
+:root[data-theme="midnight-navy"] {
+  --bg: #070b14;
+  --bg-secondary: #040811;
+  --surface: #0d1424;
+  --surface-hover: #121b30;
+  --surface-active: #17223b;
+
+  --border: #1a2540;
+  --border-hover: #243356;
+
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
+  --text-inverse: #070b14;
+
+  --accent: #60a5fa;
+  --accent-hover: #93c5fd;
+  --accent-2: #818cf8;
+  --accent-2-hover: #a5b4fc;
+
+  --success: #34d399;
+  --warning: #fbbf24;
+  --error: #f87171;
+  --info: #60a5fa;
+
+  --glass-bg: rgba(13, 20, 36, 0.72);
+  --glass-border: rgba(96, 165, 250, 0.08);
+
+  --skeleton-base: #0d1424;
+  --skeleton-shine: #1a2540;
+
+  --scrollbar-track: #070b14;
+  --scrollbar-thumb: #1a2540;
+
+  color-scheme: dark;
+}
+
+/* ============================================================================
+   4. WARM SAND
+   ============================================================================ */
+:root[data-theme="warm-sand"] {
+  --bg: #f5f0e8;
+  --bg-secondary: #ede6db;
+  --surface: #faf7f2;
+  --surface-hover: #f0ebe2;
+  --surface-active: #e8e1d5;
+
+  --border: #e0d9cc;
+  --border-hover: #cfc6b5;
+
+  --text-primary: #1a1714;
+  --text-secondary: #57504a;
+  --text-tertiary: #8a8279;
+  --text-inverse: #faf7f2;
+
+  --accent: #1a1714;
+  --accent-hover: #2d2924;
+  --accent-2: #b5602a;
+  --accent-2-hover: #d4742e;
+
+  --success: #3d8b50;
+  --warning: #b8860b;
+  --error: #c53030;
+  --info: #2b6cb0;
+
+  --glass-bg: rgba(250, 247, 242, 0.72);
+  --glass-border: rgba(26, 23, 20, 0.06);
+
+  --skeleton-base: #e0d9cc;
+  --skeleton-shine: #f0ebe2;
+
+  --scrollbar-track: #ede6db;
+  --scrollbar-thumb: #cfc6b5;
+
+  color-scheme: light;
+}
+
+/* ============================================================================
+   5. FOREST
+   ============================================================================ */
+:root[data-theme="forest"] {
+  --bg: #0c130d;
+  --bg-secondary: #080f09;
+  --surface: #111a12;
+  --surface-hover: #162118;
+  --surface-active: #1b281d;
+
+  --border: #1d2e1e;
+  --border-hover: #274029;
+
+  --text-primary: #e2f0e4;
+  --text-secondary: #8fae92;
+  --text-tertiary: #5a7a5d;
+  --text-inverse: #0c130d;
+
+  --accent: #4ade80;
+  --accent-hover: #86efac;
+  --accent-2: #86efac;
+  --accent-2-hover: #bbf7d0;
+
+  --success: #4ade80;
+  --warning: #facc15;
+  --error: #f87171;
+  --info: #38bdf8;
+
+  --glass-bg: rgba(17, 26, 18, 0.72);
+  --glass-border: rgba(74, 222, 128, 0.08);
+
+  --skeleton-base: #111a12;
+  --skeleton-shine: #1d2e1e;
+
+  --scrollbar-track: #0c130d;
+  --scrollbar-thumb: #1d2e1e;
+
+  color-scheme: dark;
+}
+
+/* ============================================================================
+   6. GRAPHITE
+   ============================================================================ */
+:root[data-theme="graphite"] {
+  --bg: #1a1a1a;
+  --bg-secondary: #141414;
+  --surface: #242424;
+  --surface-hover: #2c2c2c;
+  --surface-active: #333333;
+
+  --border: #333333;
+  --border-hover: #444444;
+
+  --text-primary: #f5f5f5;
+  --text-secondary: #a3a3a3;
+  --text-tertiary: #737373;
+  --text-inverse: #1a1a1a;
+
+  --accent: #e5e5e5;
+  --accent-hover: #f5f5f5;
+  --accent-2: #a3a3a3;
+  --accent-2-hover: #c4c4c4;
+
+  --success: #4ade80;
+  --warning: #facc15;
+  --error: #f87171;
+  --info: #60a5fa;
+
+  --glass-bg: rgba(36, 36, 36, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.06);
+
+  --skeleton-base: #242424;
+  --skeleton-shine: #333333;
+
+  --scrollbar-track: #1a1a1a;
+  --scrollbar-thumb: #333333;
+
+  color-scheme: dark;
+}
+
+/* ============================================================================
+   7. ROSE QUARTZ
+   ============================================================================ */
+:root[data-theme="rose-quartz"] {
+  --bg: #1a0a0e;
+  --bg-secondary: #14080b;
+  --surface: #22101a;
+  --surface-hover: #2c1522;
+  --surface-active: #361a2a;
+
+  --border: #3d1a28;
+  --border-hover: #552438;
+
+  --text-primary: #f5e6ec;
+  --text-secondary: #c09aac;
+  --text-tertiary: #8a6070;
+  --text-inverse: #1a0a0e;
+
+  --accent: #fb7185;
+  --accent-hover: #fda4af;
+  --accent-2: #fda4af;
+  --accent-2-hover: #fecdd3;
+
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --error: #f87171;
+  --info: #60a5fa;
+
+  --glass-bg: rgba(34, 16, 26, 0.72);
+  --glass-border: rgba(251, 113, 133, 0.08);
+
+  --skeleton-base: #22101a;
+  --skeleton-shine: #3d1a28;
+
+  --scrollbar-track: #1a0a0e;
+  --scrollbar-thumb: #3d1a28;
+
+  color-scheme: dark;
+}
+
+/* ============================================================================
+   8. BLUEPRINT
+   ============================================================================ */
+:root[data-theme="blueprint"] {
+  --bg: #03071e;
+  --bg-secondary: #020517;
+  --surface: #05101f;
+  --surface-hover: #081829;
+  --surface-active: #0b2033;
+
+  --border: #0a1f3a;
+  --border-hover: #0f2e54;
+
+  --text-primary: #e0f2fe;
+  --text-secondary: #7dd3fc;
+  --text-tertiary: #3a8bc2;
+  --text-inverse: #03071e;
+
+  --accent: #00d4ff;
+  --accent-hover: #38e0ff;
+  --accent-2: #0ea5e9;
+  --accent-2-hover: #38bdf8;
+
+  --success: #34d399;
+  --warning: #fbbf24;
+  --error: #f87171;
+  --info: #0ea5e9;
+
+  --glass-bg: rgba(5, 16, 31, 0.72);
+  --glass-border: rgba(0, 212, 255, 0.08);
+
+  --skeleton-base: #05101f;
+  --skeleton-shine: #0a1f3a;
+
+  --scrollbar-track: #03071e;
+  --scrollbar-thumb: #0a1f3a;
+
+  color-scheme: dark;
+}
+
+/* ============================================================================
+   Frosted Glass Utility
+   ============================================================================ */
+.glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+.glass-strong {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+}
+
+.glass-subtle {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+}
+
+/* ============================================================================
+   Noise Texture Overlay
+   Uses CSS repeating-conic-gradient to emulate a grain/noise pattern
+   ============================================================================ */
+.noise::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  z-index: 1;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+  mix-blend-mode: overlay;
+}
+
+.noise {
+  position: relative;
+}
+
+/* ============================================================================
+   Custom Scrollbar Styling (per theme via custom properties)
+   ============================================================================ */
+
+/* Webkit-based scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-hover);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--scrollbar-track);
+}
+
+/* Firefox scrollbar styling */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+/* Hide scrollbar by default, show on hover — for panels & containers */
+.scrollbar-auto {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.scrollbar-hidden {
+  scrollbar-width: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
