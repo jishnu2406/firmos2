@@ -147,8 +147,8 @@ export default function LoginPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <div className="h-10 w-10 overflow-hidden rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/10">
-              <img src="/logo.png" alt="DNAX.ai Os Logo" className="h-full w-full object-cover" />
+            <div className="h-10 w-10 overflow-hidden rounded-xl bg-black flex items-center justify-center border border-white/10 shadow-[0_0_15px_rgba(99,102,241,0.25)]">
+              <img src="/logo.png" alt="DNAX.ai Os Logo" className="h-full w-full object-cover scale-105" style={{ filter: "brightness(1.4) contrast(1.2) drop-shadow(0 0 4px rgba(255,255,255,0.8))" }} />
             </div>
             <span className="text-xl font-bold tracking-tight">DNAX.ai Os</span>
           </motion.div>
@@ -206,8 +206,8 @@ export default function LoginPage() {
         >
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-3 justify-center mb-8">
-            <div className="h-10 w-10 overflow-hidden rounded-xl bg-gradient-to-br from-[var(--accent-2)] to-purple-600 flex items-center justify-center">
-              <img src="/logo.png" alt="DNAX.ai Os Logo" className="h-full w-full object-cover" />
+            <div className="h-10 w-10 overflow-hidden rounded-xl bg-black flex items-center justify-center border border-white/10 shadow-[0_0_15px_rgba(99,102,241,0.25)]">
+              <img src="/logo.png" alt="DNAX.ai Os Logo" className="h-full w-full object-cover scale-105" style={{ filter: "brightness(1.4) contrast(1.2) drop-shadow(0 0 4px rgba(255,255,255,0.8))" }} />
             </div>
             <span className="text-xl font-bold text-[var(--text-primary)] tracking-tight">
               DNAX.ai Os

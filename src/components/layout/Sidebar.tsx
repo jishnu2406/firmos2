@@ -105,8 +105,8 @@ export const Sidebar: React.FC = () => {
     >
       {/* Org header */}
       <div className="flex items-center gap-3 px-4 h-14 border-b border-[var(--border)] shrink-0">
-        <div className="h-8 w-8 overflow-hidden rounded-lg bg-gradient-to-br from-[var(--accent-2)] to-[var(--accent)] flex items-center justify-center text-white font-bold text-sm shrink-0">
-          <img src="/logo.png" alt="Logo" className="h-full w-full object-cover" />
+        <div className="h-9 w-9 overflow-hidden rounded-lg border border-white/10 bg-black flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(99,102,241,0.2)]">
+          <img src="/logo.png" alt="Logo" className="h-full w-full object-cover scale-105" style={{ filter: "brightness(1.4) contrast(1.2) drop-shadow(0 0 3px rgba(255,255,255,0.85))" }} />
         </div>
         <AnimatePresence>
           {isExpanded && (
