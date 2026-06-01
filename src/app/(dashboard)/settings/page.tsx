@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import {
   Palette,
   User,
@@ -12,9 +13,12 @@ import {
   Camera,
   Layout,
   Type,
-  AlignLeft
+  AlignLeft,
+  Sparkles,
+  CheckCircle2
 } from "lucide-react";
 import { useTheme } from "@/lib/theme-provider";
+import { useAppStore } from "@/lib/store";
 import {
   cn,
   Button,
@@ -34,6 +38,8 @@ const SETTINGS_SECTIONS = [
 ];
 
 export default function SettingsPage() {
+  const router = useRouter();
+  const { currentUser, setCurrentUser } = useAppStore();
   const [activeSection, setActiveSection] = useState<string>("appearance");
   const { theme, setTheme, font, setFont, themes, fonts } = useTheme();
 
@@ -43,6 +49,47 @@ export default function SettingsPage() {
   // Profile Form state
   const [name, setName] = useState("Norman Foster");
   const [email, setEmail] = useState("norman@fosterandpartners.com");
+
+  // Fresh onboarding state variables
+  const [newOrgName, setNewOrgName] = useState("");
+  const [newOrgType, setNewOrgType] = useState("ARCHITECTURE");
+  const [newOwnerName, setNewOwnerName] = useState("");
+  const [newOwnerEmail, setNewOwnerEmail] = useState("");
+  const [newBrandColor, setNewBrandColor] = useState("#6366f1");
+  const [isResetting, setIsResetting] = useState(false);
+
+  const handleWorkspaceReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!confirm("Are you absolutely sure you want to proceed? This will delete all seed data database records and initialize a completely fresh empty studio workspace!")) {
+      return;
+    }
+    setIsResetting(true);
+    try {
+      const res = await fetch("/api/workspace/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orgName: newOrgName,
+          ownerName: newOwnerName,
+          ownerEmail: newOwnerEmail,
+          orgType: newOrgType,
+          brandColor: newBrandColor
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Reset failed");
+      }
+      setCurrentUser(data.user);
+      alert(`Workspace "${newOrgName}" successfully initialized! Let's check out your new dashboard.`);
+      router.push("/");
+    } catch (err: any) {
+      console.error(err);
+      alert("Failed to initialize workspace: " + err.message);
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -275,7 +322,133 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {activeSection !== "appearance" && activeSection !== "profile" && (
+          {activeSection === "workspace" && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
+                  <Sliders size={16} className="text-[var(--accent-2)]" />
+                  Workspace Setup & Clean Slate
+                </h3>
+                <p className="text-xs text-[var(--text-secondary)]">
+                  Configure your own customized design studio, wipe demo datasets, and start fresh.
+                </p>
+              </div>
+
+              {/* Current Status */}
+              <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--surface-hover)]/30 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Current Workspace</p>
+                  <p className="text-base font-bold text-[var(--text-primary)] mt-1">{currentUser?.orgName || "Demo Firm"}</p>
+                  <p className="text-xs text-[var(--text-tertiary)] mt-0.5">Role: {currentUser?.role?.toUpperCase() || "MEMBER"} · Plan: {currentUser?.orgPlan || "ENTERPRISE"}</p>
+                </div>
+                <Badge variant="primary" dot>ACTIVE</Badge>
+              </div>
+
+              {/* Warning box */}
+              <div className="p-4 rounded-xl bg-red-500/5 border border-red-500/10 text-red-200 space-y-2">
+                <div className="flex items-center gap-2 font-bold text-xs text-red-400">
+                  <ShieldAlert size={14} />
+                  DANGER ZONE: RESET TO FRESH WORKSPACE
+                </div>
+                <p className="text-[11px] leading-relaxed text-red-400">
+                  Initializing a fresh workspace will permanently **wipe out all Foster & Partners demo records** (all projects, milestones, tasks, financial records, assets, and users) from the local SQLite database. It will immediately seed a brand new organization and set you up as the master owner.
+                </p>
+              </div>
+
+              {/* Workspace Setup Form */}
+              <form onSubmit={handleWorkspaceReset} className="space-y-4 pt-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-[var(--text-secondary)]">Your Studio Name</label>
+                    <Input
+                      placeholder="e.g. Lalgi Architects"
+                      value={newOrgName}
+                      onChange={(e) => setNewOrgName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-[var(--text-secondary)]">Studio Specialization</label>
+                    <select
+                      className="w-full flex h-10 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--accent-2)] transition-colors"
+                      value={newOrgType}
+                      onChange={(e) => setNewOrgType(e.target.value)}
+                    >
+                      <option value="ARCHITECTURE">Architecture Firm</option>
+                      <option value="INTERIOR_DESIGN">Interior Design Studio</option>
+                      <option value="PRODUCTION">Production / Fitout Agency</option>
+                      <option value="GRAPHIC_DESIGN">Graphic Design Agency</option>
+                      <option value="BRAND_AGENCY">Brand & Strategy Firm</option>
+                      <option value="MIXED">Mixed Creative Agency</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-[var(--text-secondary)]">Founder / Owner Name</label>
+                    <Input
+                      placeholder="e.g. Jishnu Lalgi"
+                      value={newOwnerName}
+                      onChange={(e) => setNewOwnerName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-[var(--text-secondary)]">Founder Email Address</label>
+                    <Input
+                      type="email"
+                      placeholder="e.g. jishnu@yourdomain.com"
+                      value={newOwnerEmail}
+                      onChange={(e) => setNewOwnerEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Swatches */}
+                <div className="space-y-2 pt-2">
+                  <label className="text-xs font-semibold text-[var(--text-secondary)]">Studio Primary Brand Accent</label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {[
+                      { hex: "#6366f1", name: "Indigo Classic" },
+                      { hex: "#00d4ff", name: "Blueprint Blue" },
+                      { hex: "#4ade80", name: "Eco Green" },
+                      { hex: "#fb7185", name: "Quartz Rose" },
+                      { hex: "#f59e0b", name: "Warm Amber" },
+                      { hex: "#ec4899", name: "Magenta Pop" },
+                      { hex: "#a855f7", name: "Purple Dream" }
+                    ].map((col) => (
+                      <button
+                        type="button"
+                        key={col.hex}
+                        onClick={() => setNewBrandColor(col.hex)}
+                        className={cn(
+                          "h-8 px-3 rounded-lg text-[10px] font-semibold flex items-center gap-1.5 border transition-all active:scale-[0.98]",
+                          newBrandColor === col.hex
+                            ? "border-[var(--accent-2)] bg-[var(--surface-hover)] shadow-sm"
+                            : "border-[var(--border)] hover:bg-[var(--surface-hover)] bg-[var(--surface)] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+                        )}
+                      >
+                        <div style={{ backgroundColor: col.hex }} className="h-3 w-3 rounded-full shrink-0" />
+                        {col.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-4 border-t border-[var(--border)]">
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    disabled={isResetting}
+                    className="gap-2 border-red-500/20 bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-700 hover:to-amber-700 text-white font-bold"
+                  >
+                    {isResetting ? "Resetting and Seed-clearing..." : "Initialize Fresh Workspace"}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {activeSection !== "appearance" && activeSection !== "profile" && activeSection !== "workspace" && (
             <div className="py-20 flex flex-col items-center justify-center text-center">
               <Sliders size={48} className="text-[var(--text-tertiary)] mb-4" />
               <h3 className="text-lg font-medium text-[var(--text-primary)]">Section Under Integration</h3>
