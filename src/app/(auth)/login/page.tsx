@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import {
@@ -30,6 +30,23 @@ const DEMO_USER = {
   permissions: ["*"],
 };
 
+const decodeJwt = (token: string) => {
+  try {
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    console.error("JWT decoding failed:", e);
+    return null;
+  }
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const { setCurrentUser, setIsDemo } = useAppStore();
@@ -37,6 +54,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Authentic OAuth Configuration States
+  const [showGoogleConfig, setShowGoogleConfig] = useState(false);
+  const [googleClientId, setGoogleClientId] = useState(
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "1005826849929-hfe96bspn9brm8q8711k9424l9d8he0j.apps.googleusercontent.com"
+  );
+  const [showMicrosoftConfig, setShowMicrosoftConfig] = useState(false);
+  const [microsoftClientId, setMicrosoftClientId] = useState(
+    process.env.NEXT_PUBLIC_MICROSOFT_CLIENT_ID || ""
+  );
 
   // Fresh Onboarding Modal States
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -46,6 +73,119 @@ export default function LoginPage() {
   const [newOwnerEmail, setNewOwnerEmail] = useState("");
   const [newBrandColor, setNewBrandColor] = useState("#6366f1");
   const [isOnboarding, setIsOnboarding] = useState(false);
+
+  // Dynamic script loader for Authentic Google GSI and Microsoft MSAL CDNs
+  useEffect(() => {
+    const googleScript = document.createElement("script");
+    googleScript.src = "https://accounts.google.com/gsi/client";
+    googleScript.async = true;
+    googleScript.defer = true;
+    document.body.appendChild(googleScript);
+
+    const msScript = document.createElement("script");
+    msScript.src = "https://alcdn.msauth.net/browser/2.30.0/js/msal-browser.min.js";
+    msScript.async = true;
+    msScript.defer = true;
+    document.body.appendChild(msScript);
+
+    return () => {
+      document.body.removeChild(googleScript);
+      document.body.removeChild(msScript);
+    };
+  }, []);
+
+  const handleGoogleCredentialResponse = (response: any) => {
+    try {
+      const decoded = decodeJwt(response.credential);
+      if (decoded) {
+        setIsDemo(true);
+        setCurrentUser({
+          id: decoded.sub,
+          name: decoded.name,
+          email: decoded.email,
+          image: decoded.picture,
+          role: "ceo",
+          orgId: "org_demo_001",
+          orgName: "Foster & Partners",
+          orgSlug: "foster-partners",
+          orgPlan: "ENTERPRISE",
+          permissions: ["*"],
+        });
+        router.push("/");
+      }
+    } catch (err) {
+      console.error("Google SSO callback error:", err);
+      alert("Failed to authenticate with Google: " + err);
+    }
+  };
+
+  const triggerGoogleLogin = (customId?: string) => {
+    const targetId = customId || googleClientId;
+    try {
+      if (!(window as any).google) {
+        alert("Google Authentication script is still loading. Please try again in a moment.");
+        return;
+      }
+      (window as any).google.accounts.id.initialize({
+        client_id: targetId,
+        callback: handleGoogleCredentialResponse,
+      });
+      (window as any).google.accounts.id.prompt((notification: any) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          alert("Google Sign-In prompt initialized. Please choose your account to sign in.");
+        }
+      });
+    } catch (err: any) {
+      console.error(err);
+      alert("Google initialization failed: " + err.message);
+    }
+  };
+
+  const triggerMicrosoftLogin = (customId?: string) => {
+    const targetId = customId || microsoftClientId;
+    try {
+      if (!(window as any).msal) {
+        alert("Microsoft Authentication script is still loading. Please try again in a moment.");
+        return;
+      }
+      const msalConfig = {
+        auth: {
+          clientId: targetId,
+          authority: "https://login.microsoftonline.com/common",
+          redirectUri: window.location.origin + "/login",
+        }
+      };
+      const msalInstance = new (window as any).msal.PublicClientApplication(msalConfig);
+      setIsLoading(true);
+      msalInstance.loginPopup({
+        scopes: ["user.read"],
+        prompt: "select_account"
+      }).then((response: any) => {
+        setIsDemo(true);
+        setCurrentUser({
+          id: response.account.homeAccountId,
+          name: response.account.name,
+          email: response.account.username,
+          image: "",
+          role: "ceo",
+          orgId: "org_demo_001",
+          orgName: "Foster & Partners",
+          orgSlug: "foster-partners",
+          orgPlan: "ENTERPRISE",
+          permissions: ["*"],
+        });
+        router.push("/");
+      }).catch((err: any) => {
+        console.error("Microsoft login failed:", err);
+        alert("Microsoft login failed: " + err.message);
+      }).finally(() => {
+        setIsLoading(false);
+      });
+    } catch (err: any) {
+      console.error(err);
+      alert("Microsoft initialization failed: " + err.message);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,16 +205,20 @@ export default function LoginPage() {
     router.push("/");
   };
 
-  const handleSSOLogin = async (provider: "google" | "microsoft") => {
-    setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setIsDemo(true);
-    setCurrentUser({
-      ...DEMO_USER,
-      name: provider === "google" ? "Alexandra Chen (Google)" : "Alexandra Chen (Microsoft)",
-      email: provider === "google" ? "alex.chen@google-sso.com" : "alex.chen@microsoft-sso.com",
-    });
-    router.push("/");
+  const handleSSOLogin = (provider: "google" | "microsoft") => {
+    if (provider === "google") {
+      if (!googleClientId) {
+        setShowGoogleConfig(true);
+      } else {
+        triggerGoogleLogin();
+      }
+    } else {
+      if (!microsoftClientId) {
+        setShowMicrosoftConfig(true);
+      } else {
+        triggerMicrosoftLogin();
+      }
+    }
   };
 
   const handleWorkspaceReset = async (e: React.FormEvent) => {
@@ -506,6 +650,144 @@ export default function LoginPage() {
                   </Button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Authentic Google Client ID Config Modal */}
+      <AnimatePresence>
+        {showGoogleConfig && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              className="absolute inset-0 bg-black/60 backdrop-blur-md"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowGoogleConfig(false)}
+            />
+            <motion.div
+              className="relative z-10 w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-2xl space-y-6"
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: "spring", duration: 0.4 }}
+            >
+              <div>
+                <h3 className="text-lg font-bold text-[var(--text-primary)] flex items-center gap-2">
+                  <Sparkles size={20} className="text-indigo-400" />
+                  Authentic Google OAuth Configuration
+                </h3>
+                <p className="text-xs text-[var(--text-secondary)] mt-1.5 leading-relaxed">
+                  Enter your Google Cloud Console <b>Client ID</b> to open a secure, direct authentication panel with Google.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-[var(--text-secondary)]">Google Client ID</label>
+                  <Input
+                    placeholder="e.g. 123456-abcdef.apps.googleusercontent.com"
+                    value={googleClientId}
+                    onChange={(e) => setGoogleClientId(e.target.value)}
+                  />
+                  <p className="text-[10px] text-[var(--text-tertiary)] leading-normal mt-1">
+                    *Using a default sandbox Client ID. You can override it here or set it in Vercel as NEXT_PUBLIC_GOOGLE_CLIENT_ID.
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-[var(--border)]">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowGoogleConfig(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    onClick={() => {
+                      setShowGoogleConfig(false);
+                      triggerGoogleLogin(googleClientId);
+                    }}
+                    disabled={!googleClientId}
+                  >
+                    Launch Google Sign-In
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Authentic Microsoft Client ID Config Modal */}
+      <AnimatePresence>
+        {showMicrosoftConfig && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              className="absolute inset-0 bg-black/60 backdrop-blur-md"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowMicrosoftConfig(false)}
+            />
+            <motion.div
+              className="relative z-10 w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-2xl space-y-6"
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: "spring", duration: 0.4 }}
+            >
+              <div>
+                <h3 className="text-lg font-bold text-[var(--text-primary)] flex items-center gap-2">
+                  <Building2 size={20} className="text-sky-400" />
+                  Authentic Microsoft OAuth Configuration
+                </h3>
+                <p className="text-xs text-[var(--text-secondary)] mt-1.5 leading-relaxed">
+                  Provide your Azure Portal <b>Application Client ID</b> to initialize the official Microsoft MSAL authentication popup flow.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-[var(--text-secondary)]">Azure Client ID (Application ID)</label>
+                  <Input
+                    placeholder="e.g. 4e9f3b8b-e85d-4f1b-ba7d-xxxxxxxxxxxx"
+                    value={microsoftClientId}
+                    onChange={(e) => setMicrosoftClientId(e.target.value)}
+                  />
+                  <p className="text-[10px] text-[var(--text-tertiary)] leading-normal mt-1">
+                    *Microsoft authentic sign-in requires registering `https://firmos2.vercel.app/login` in your Azure Redirect URIs.
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-[var(--border)]">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowMicrosoftConfig(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    onClick={() => {
+                      setShowMicrosoftConfig(false);
+                      triggerMicrosoftLogin(microsoftClientId);
+                    }}
+                    disabled={!microsoftClientId}
+                  >
+                    Launch Microsoft Sign-In
+                  </Button>
+                </div>
+              </div>
             </motion.div>
           </div>
         )}
